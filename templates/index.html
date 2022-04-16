@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+{% block content1 %}
+<div>
+    <h1>REPORTE</h1>
+    <table>
+        <tr>
+            <th>Sensor</th>
+            <th>average diff time</th>
+            <th>Total Points</th>
+            <th>Biggest</th>
+            <th>Smallest</th>
+            <th>Total dead</th>
+            <th>Total Cleaning</th>
+            <th>Total TxFailed</th>
+        </tr>
+        <tr id=sensor1></tr>
+        <tr id=sensor2></tr>
+        <tr id=sensor3></tr>
+        <tr id=sensor4></tr>
+        <tr id=sensor5></tr>
+        <tr id=sensor6></tr>
+    </table>
+</div>
+<script type="text/javascript" src="/static/report.js"></script>
+{% endblock content1 %}
+{% block content2 %}
+
+{% endblock content2 %}
+
+{% block content3 %}
+<center>
+    <h1>Sensor</h1>
+
+    <canvas id="chart1" width="600" height="400"></canvas>
+
+
+    <script>
+        max = {{ max }};
+    </script>
+    <script src="/static/sensor.js">
+        
+    </script>
+
+</center>
+{% endblock content3 %}
+
+{% block content4 %}
+<h1>Live View</h1>
+<div>
+    <div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <canvas id="canvas1"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src='/static/chart.js'>
+</script>
+{% endblock content4 %}

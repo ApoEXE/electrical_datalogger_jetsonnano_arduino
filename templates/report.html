@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block content1 %}
+<div>
+    <h1>REPORTE</h1>
+    <table>
+        <tr>
+            <th>Sensor</th>
+            <th>average diff time</th>
+            <th>Total Points</th>
+            <th>Biggest</th>
+            <th>Smallest</th>
+            <th>Total dead</th>
+            <th>Total Cleaning</th>
+            <th>Total TxFailed</th>
+        </tr>
+        <tr id=sensor1></tr>
+        <tr id=sensor2></tr>
+        <tr id=sensor3></tr>
+        <tr id=sensor4></tr>
+        <tr id=sensor5></tr>
+        <tr id=sensor6></tr>
+    </table>
+</div>
+<script type="text/javascript" src="/static/report.js"></script>
+{% endblock content1 %}
