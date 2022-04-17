@@ -90,7 +90,7 @@ def oled_disp():
         # Display image.
         disp.image(image)
         disp.display()
-        time.sleep(1)
+
 
 def gather_data():
     global var_volt_ac, var_current_ac,bus
@@ -133,8 +133,9 @@ def gather_data():
     d2 = now.strftime("%H:%M:%S")
     ac_writer.writerow([d1,d2,volt_ac*ac_curr,volt_ac,ac_curr])
     file.flush()
-
+    time.sleep(0.1)
     oled_disp()
+    time.sleep(0.1)
     return [volt_ac,ac_curr]
 
 def gather_loop():
@@ -143,7 +144,6 @@ def gather_loop():
         [ac_current, ac_voltage] = gather_data()
         var_volt_ac = ac_voltage
         var_current_ac = ac_current
-        time.sleep(0.1)
 
 gather_thread = Thread(target=gather_loop)
 display_thread = Thread(target=oled_disp)
