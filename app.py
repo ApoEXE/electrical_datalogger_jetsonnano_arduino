@@ -40,7 +40,7 @@ reset = 0
 app = Flask(__name__)
 
 
-ac_tel_file =  open("ac_telemetry.csv","w")
+ac_tel_file =  open("/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.csv","w")
 ac_writer = csv.writer(ac_tel_file,delimiter=',',quoting=csv.QUOTE_MINIMAL)
 
 # 128x64 display with hardware I2C:
