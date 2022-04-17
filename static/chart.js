@@ -5,7 +5,7 @@ $(document).ready(function () {
             data: {
                 labels: [],
                 datasets: [{
-                    label: "Temperature 1",
+                    label: "AC Current",
                     backgroundColor: 'rgb(255, 99, 132)',
                     borderColor: 'rgb(255, 99, 132)',
                     data: [],
@@ -19,7 +19,7 @@ $(document).ready(function () {
                 },
                 title: {
                     display: true,
-                    text: 'TPMS'
+                    text: 'AC Current real time Plotting'
                 },
                 tooltips: {
                     mode: 'index',
@@ -74,7 +74,7 @@ $(document).ready(function () {
             }
             */
            config.data.labels.push(data.date);
-           config.data.datasets[0].data.push(data.temp);
+           config.data.datasets[0].data.push(data.current);
            lineChart.update();
         }
         
