@@ -122,7 +122,8 @@ def gather_data():
         5
     today = date.today()
     d1 = today.strftime("%Y/%m/%d")
-    now = datetime.time()
+    from datetime import datetime
+    now = datetime.now()
     d2 = now.strftime("%H:%M:%S")
     ac_writer.writerow([d1,d2,volt_ac*ac_curr,volt_ac,ac_curr])
     ac_tel_file.flush()
