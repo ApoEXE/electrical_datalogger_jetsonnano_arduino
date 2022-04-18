@@ -17,9 +17,7 @@ import time
 import datetime
 import signal
 
-import csv
-
-import pathlib
+import sqlite3
 
 is_shutdown = False
 realvolt = 4.59
@@ -29,20 +27,23 @@ var_volt_ac = 0
 
 reset = 0
 index_data = int(0)
-path="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.csv"
+path="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db"
 
 
 print(f"START at {datetime.datetime.now()}")
-file = pathlib.Path(path)
-if(file.exists()==False):
-    file = open(path,"x")
 
-file =  open(path,"r+")
-ac_writer = csv.writer(file,delimiter=',',quoting=csv.QUOTE_MINIMAL)
-reader = csv.reader(file)
-data = list(reader)
-n_lines= len(data)
-print(f"number of lines: {n_lines}  ")
+conn = sqlite3.connect(path)
+print ("Opened database successfully")
+conn.execute('''CREATE TABLE IF NOT EXISTS ac_parameters
+         (ID INTEGER PRIMARY KEY AUTOINCREMENT,
+         DATE           TEXT    NOT NULL,
+         TIME            TEXT     NOT NULL,
+         VOLTAGE        REAL,
+         CURRENT         REAL,
+         POWER          REAL);''')
+
+
+
 
 app = Flask(__name__)
 
@@ -94,25 +95,22 @@ def gather_data():
         from datetime import datetime
         now = datetime.now()
         d2 = now.strftime("%H:%M:%S")
-        ac_writer.writerow([d1,d2,volt_ac*ac_curr,var_volt_ac,var_current_ac])
-        file.flush()
-        #time.sleep(0.1)
-        
-        #oled_disp()
-        #time.sleep(0.1)
+        conn.execute("INSERT INTO ac_parameters (DATE,TIME,VOLTAGE,CURRENT,POWER) \
+      VALUES ( ?, ?, ?, ?, ? )",(d1,d2,var_volt_ac,var_current_ac,volt_ac*ac_curr))
+        conn.commit()
+
     return [volt_ac,ac_curr]
 
 def gather_loop():
     global var_volt_ac,var_current_ac
     while not is_shutdown:
         [ac_voltage, ac_current] = gather_data()
-       # var_volt_ac = ac_voltage
-       # var_current_ac = ac_current
+
         time.sleep(0.5)
 
 
 
-gather_thread = Thread(target=gather_loop)
+#gather_thread = Thread(target=gather_loop)
 
 
 
@@ -122,7 +120,7 @@ def stop(sig, frame):
   print(f"SIGTERM at {datetime.datetime.now()}")
   global is_shutdown
   is_shutdown = True
-  file.close()
+  conn.close()
   exit(1)
 
 signal.signal(signal.SIGINT, stop)
@@ -163,7 +161,7 @@ def sensorLive():
 
 if __name__ == '__main__':
    
-    gather_thread.start()
+    gather_loop()
 
     app.run(debug=True, threaded=True, host='0.0.0.0', port=5000)
 
