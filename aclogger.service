@@ -1,0 +1,13 @@
+[Unit]
+# After=network.service
+Description=DataLogger for AC current and Voltage
+
+[Service]
+Type=simple
+# WorkingDirectory=/code/python/myapp
+ExecStart=/home/nano/projects/multi_datalogger.sh
+# User=do-user
+
+[Install]
+WantedBy=multi-user.target
+# WantedBy=default.target

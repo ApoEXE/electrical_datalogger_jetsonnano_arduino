@@ -1,0 +1,6 @@
+sudo systemctl start aclogger.service
+
+sudo systemctl daemon-reload
+sudo systemctl enable aclogger.service
+sudo chmod 664 /etc/systemd/system/aclogger.service
+

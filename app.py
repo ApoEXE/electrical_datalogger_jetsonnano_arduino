@@ -5,7 +5,6 @@
 import json
 from threading import Thread
 import time
-import os
 import datetime
 from datetime import date,datetime
 from flask import Flask, Response, render_template, request, session, jsonify
@@ -32,19 +31,6 @@ path="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.
 
 print(f"START at {datetime.datetime.now()}")
 
-conn = sqlite3.connect(path)
-print ("Opened database successfully")
-conn.execute('''CREATE TABLE IF NOT EXISTS ac_parameters
-         (ID INTEGER PRIMARY KEY AUTOINCREMENT,
-         DATE           TEXT    NOT NULL,
-         TIME            TEXT     NOT NULL,
-         VOLTAGE        REAL,
-         CURRENT         REAL,
-         POWER          REAL);''')
-
-
-
-
 app = Flask(__name__)
 
 
@@ -52,6 +38,17 @@ app = Flask(__name__)
 #print(f"FIRST ROW: {string_tmp}  {ac_value}")
 
 bus = smbus.SMBus(0)
+
+conn = sqlite3.connect(path, check_same_thread=False)
+print ("Opened database successfully")
+conn.execute('''CREATE TABLE IF NOT EXISTS ac_parameters
+            (ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            DATE           TEXT    NOT NULL,
+            TIME            TEXT     NOT NULL,
+            VOLTAGE        REAL,
+            CURRENT         REAL,
+            POWER          REAL);''')
+
 
 
 def gather_data():
@@ -87,30 +84,30 @@ def gather_data():
     except:
         print(f"ERROR gather 0x20 i2c disconnection")
 
-    if(volt_ac<300):
-        var_volt_ac = str(round(volt_ac,2))
-        var_current_ac = str(round(ac_curr,2))
-        today = date.today()
-        d1 = today.strftime("%Y/%m/%d")
-        from datetime import datetime
-        now = datetime.now()
-        d2 = now.strftime("%H:%M:%S")
-        conn.execute("INSERT INTO ac_parameters (DATE,TIME,VOLTAGE,CURRENT,POWER) \
-      VALUES ( ?, ?, ?, ?, ? )",(d1,d2,var_volt_ac,var_current_ac,volt_ac*ac_curr))
-        conn.commit()
 
-    return [volt_ac,ac_curr]
+    var_volt_ac = str(round(volt_ac,2))
+    var_current_ac = str(round(ac_curr,2))
+    today = date.today()
+    d1 = today.strftime("%Y/%m/%d")
+    from datetime import datetime
+    now = datetime.now()
+    d2 = now.strftime("%H:%M:%S")
+
+    return [d1,d2,var_volt_ac,var_current_ac,volt_ac*ac_curr]
 
 def gather_loop():
-    global var_volt_ac,var_current_ac
+    
     while not is_shutdown:
-        [ac_voltage, ac_current] = gather_data()
-
+        [d1,d2,var_volt_ac,var_current_ac,POWER] = gather_data()
+        conn.execute("INSERT INTO ac_parameters (DATE,TIME,VOLTAGE,CURRENT,POWER) \
+        VALUES ( ?, ?, ?, ?, ? )",(d1,d2,var_volt_ac,var_current_ac,POWER))
+        conn.commit()
         time.sleep(0.5)
+    conn.close()
 
 
 
-#gather_thread = Thread(target=gather_loop)
+gather_thread = Thread(target=gather_loop)
 
 
 
@@ -159,11 +156,14 @@ def sensorLive():
     return Response(generate_random_data(), mimetype='text/event-stream')
 
 
+
 if __name__ == '__main__':
    
-    gather_loop()
+    gather_thread.start()
 
+    #gather_loop()
     app.run(debug=True, threaded=True, host='0.0.0.0', port=5000)
+    
 
     print(f"END at {datetime.datetime.now()}")
 
