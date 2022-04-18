@@ -68,29 +68,27 @@ def gather_data():
         volt_in = anaVolt*(1000+880000)/1000
         volt_ac = (volt_in/1.4142135623730950488016887242097)+21
         print('AC Voltage in ',end="")
-        v_string = str(volt_ac)
-        volt_ac_string = v_string[0] +v_string[1] +v_string[2] +v_string[3] +v_string[4]+ v_string[5]+ v_string[6]
-        
-        print(volt_ac_string,end="")
-        print("%.3f" %volt_ac,end="")
-        print('Vac',end="")
+
+        print(str(round(volt_ac,2)),end="")
+
+        print(' Vac',end="")
 
 
         #current-----------
         ac_curr = read[0]<<8 | read[1]
         print(' AC Current in ',end="")
         ac_curr = ac_curr/1000.0
-        
-        print("%.3f" %ac_curr,end="")
-        print('A  ')
+        print(str(round(ac_curr,2)),end="")
+  
+        print(' A  ')
 
 
     except:
         print(f"ERROR gather 0x20 i2c disconnection")
-        
+
     if(volt_ac<300):
-        var_volt_ac = volt_ac_string
-        var_current_ac = ac_curr
+        var_volt_ac = str(round(volt_ac,2))
+        var_current_ac = str(round(ac_curr,2))
         today = date.today()
         d1 = today.strftime("%Y/%m/%d")
         from datetime import datetime
