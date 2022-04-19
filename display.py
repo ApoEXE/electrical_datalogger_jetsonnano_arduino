@@ -8,8 +8,13 @@ from PIL import ImageDraw
 from PIL import ImageFont
 
 import subprocess
+import socket
 
-import sqlite3
+import random
+
+s = socket.socket()
+s.connect(('127.0.0.1',12345))
+
 
 path="file:/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db?mode=ro"
 # DECLARATIONS
@@ -18,8 +23,7 @@ var_volt_ac = ""
 var_date = ""
 var_time = ""
 
-con = sqlite3.connect(path,uri=True)
-cur = con.cursor()
+
 # 128x32 display with hardware I2C:
 disp = Adafruit_SSD1306.SSD1306_128_64(rst=None, i2c_bus=0, gpio=1) # setting gpio to 1 is hack to avoid platform detection
 
@@ -55,17 +59,28 @@ font = ImageFont.load_default()
 
 print("before while")
 lines_before = 0
+line = ''
+start = time.time()
 while True:
-        
-    cur.execute("SELECT * FROM ac_parameters ORDER BY ID DESC LIMIT 1;")
-    line = cur.fetchone()
+    send_to_server = "request from client"
+    try:
+        s.send(send_to_server.encode())
+        data = s.recv(4096)
+        data = data.decode('utf-8')
+        line = eval(data)
+    except:
+        print("Broken pipe on server side restarting")
+
+
+    
     print(line)
-    #lines_before = n_lines
-    var_date= str(line[1])
-    var_time=str(line[2])
-    var_current_ac = str(line[4])
-    var_volt_ac = str(line[3])
-            
+    #line = data.split(",")
+  
+    var_date= line[0]
+    var_time=line[1]
+    var_current_ac = line[3]
+    var_volt_ac = line[2]
+    
             # Draw a black filled box to clear the image.
     draw.rectangle((0,0,width,height), outline=0, fill=0)
 
@@ -84,20 +99,24 @@ while True:
     Date = subprocess.check_output(cmd, shell = True )
 
             # Write two lines of text.
-    draw.text((x, top),       "IP: " + str(IP.decode('utf-8')),  font=font, fill=255)
+    draw.text((x, top),       "IP: " + IP.decode('utf-8'),  font=font, fill=255)
     draw.text((x, top+8),   "DATE: " + var_date,  font=font, fill=255)
     draw.text((x, top+16),   "TIME: " + var_time,  font=font, fill=255)
     draw.text((x, top+24),  "AMP: " +  var_current_ac + " A",  font=font, fill=255)
     draw.text((x, top+32),  "VOLT: " +  var_volt_ac + " V",  font=font, fill=255)
-    draw.text((x, top+40),     str(CPU.decode('utf-8')), font=font, fill=255)
-    draw.text((x, top+48),  "DISK: " +  str(Disk.decode('utf-8')) ,  font=font, fill=255)
+    draw.text((x, top+40),     CPU.decode('utf-8'), font=font, fill=255)
+    draw.text((x, top+48),  "DISK: " +  Disk.decode('utf-8') ,  font=font, fill=255)
     # Display image.
     disp.image(image)
-    try:
-        disp.display()
-    except:
-        print(f"ERROR display 0x3C i2c disconnection")
-        time.sleep(4)
-    time.sleep(1)
-        
+    end = time.time()
+    if(end-start >5):
+        print("time elapsed")
+        start = end
+        try:
+            disp.display()
+        except:
+            print(f"ERROR display 0x3C i2c disconnection")
 
+    
+        
+s.close()

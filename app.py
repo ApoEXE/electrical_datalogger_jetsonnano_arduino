@@ -2,6 +2,7 @@
 # FLASK_APP=app.py
 # FLASK_ENV=development
 # flask run
+from ast import While
 import json
 from threading import Thread
 import time
@@ -18,12 +19,17 @@ import signal
 
 import sqlite3
 
+import socket
+import random
+
 is_shutdown = False
 realvolt = 4.59
 # DECLARATIONS
-var_current_ac= 0
-var_volt_ac = 0
-
+var_current_ac= ""
+var_volt_ac = ""
+d1 = ""
+d2 = ""
+POWER = ""
 reset = 0
 index_data = int(0)
 path="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db"
@@ -52,7 +58,7 @@ conn.execute('''CREATE TABLE IF NOT EXISTS ac_parameters
 
 
 def gather_data():
-    global var_volt_ac, var_current_ac,bus
+    global var_volt_ac, var_current_ac,bus,POWER,d1,d2
     address = 0x20
     try:
 
@@ -80,13 +86,14 @@ def gather_data():
   
         print(' A  ')
 
-        power = volt_ac*ac_curr
+        
     except:
         print(f"ERROR gather 0x20 i2c disconnection")
         volt_ac = 9999
         ac_curr = 9999
-        power = 0
-        time.sleep(2)
+        POWER = 0
+        #seconds_delay = random.randint(0, 3)
+        #time.sleep(seconds_delay)
     d1 = ""
     d2 = ""
     m_volt_ac = ""
@@ -95,6 +102,7 @@ def gather_data():
 
         var_volt_ac = str(round(volt_ac,2))
         m_volt_ac = var_volt_ac
+        
         var_current_ac = str(round(ac_curr,2))
         m_current_ac = var_current_ac
         today = date.today()
@@ -102,11 +110,12 @@ def gather_data():
         from datetime import datetime
         now = datetime.now()
         d2 = now.strftime("%H:%M:%S")
+        POWER = str(round(volt_ac*ac_curr,2))
 
-    return [d1,d2,m_volt_ac,m_current_ac,power]
+    return [d1,d2,m_volt_ac,m_current_ac,POWER]
 
 def gather_loop():
-    
+
     while not is_shutdown:
         [d1,d2,var_volt_ac,var_current_ac,POWER] = gather_data()
         if(d1!=""):
@@ -115,11 +124,32 @@ def gather_loop():
             conn.commit()
             time.sleep(0.5)
     conn.close()
+    
 
+def socket_loop():
+    global var_volt_ac,var_current_ac,d1,d2,POWER
+    while not is_shutdown:
+        s = socket.socket()
+        port = 12345
+        s.bind(('127.0.0.1', port))
+        s.listen(5)
+        c, addr = s.accept()
+        print (f"Socket Up and running with a connection from {addr}")
+        while not is_shutdown:
+                rcvdData = c.recv(4096)
+                print(f"S: {rcvdData}")
+                str_sendData = str([d1,d2,var_volt_ac,var_current_ac,POWER])
+                try:
+                    c.send(str_sendData.encode())
+                except:
+                    print("Broken pipe error on display.py")
+                    break
+        s.close()
+    
 
 
 gather_thread = Thread(target=gather_loop)
-
+socket_thread = Thread(target=socket_loop)
 
 
 #signal handling service
@@ -171,9 +201,9 @@ def sensorLive():
 if __name__ == '__main__':
    
     gather_thread.start()
-
+    socket_thread.start()
     #gather_loop()
-    app.run(debug=True, threaded=True, host='0.0.0.0', port=5000)
+    #app.run(debug=True, threaded=True, host='0.0.0.0', port=5000)
     
 
     print(f"END at {datetime.datetime.now()}")
