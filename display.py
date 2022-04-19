@@ -11,14 +11,14 @@ import subprocess
 
 import sqlite3
 
-path="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db"
+path="file:/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db?mode=ro"
 # DECLARATIONS
 var_current_ac= ""
 var_volt_ac = ""
 var_date = ""
 var_time = ""
 
-con = sqlite3.connect(path)
+con = sqlite3.connect(path,uri=True)
 cur = con.cursor()
 # 128x32 display with hardware I2C:
 disp = Adafruit_SSD1306.SSD1306_128_64(rst=None, i2c_bus=0, gpio=1) # setting gpio to 1 is hack to avoid platform detection
@@ -93,8 +93,11 @@ while True:
     draw.text((x, top+48),  "DISK: " +  str(Disk.decode('utf-8')) ,  font=font, fill=255)
     # Display image.
     disp.image(image)
-    disp.display()
-
+    try:
+        disp.display()
+    except:
+        print(f"ERROR display 0x3C i2c disconnection")
+        time.sleep(4)
     time.sleep(1)
         
 

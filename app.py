@@ -80,29 +80,40 @@ def gather_data():
   
         print(' A  ')
 
-
+        power = volt_ac*ac_curr
     except:
         print(f"ERROR gather 0x20 i2c disconnection")
+        volt_ac = 9999
+        ac_curr = 9999
+        power = 0
+        time.sleep(2)
+    d1 = ""
+    d2 = ""
+    m_volt_ac = ""
+    m_current_ac= ""
+    if(volt_ac < 300):
 
+        var_volt_ac = str(round(volt_ac,2))
+        m_volt_ac = var_volt_ac
+        var_current_ac = str(round(ac_curr,2))
+        m_current_ac = var_current_ac
+        today = date.today()
+        d1 = today.strftime("%Y/%m/%d")
+        from datetime import datetime
+        now = datetime.now()
+        d2 = now.strftime("%H:%M:%S")
 
-    var_volt_ac = str(round(volt_ac,2))
-    var_current_ac = str(round(ac_curr,2))
-    today = date.today()
-    d1 = today.strftime("%Y/%m/%d")
-    from datetime import datetime
-    now = datetime.now()
-    d2 = now.strftime("%H:%M:%S")
-
-    return [d1,d2,var_volt_ac,var_current_ac,volt_ac*ac_curr]
+    return [d1,d2,m_volt_ac,m_current_ac,power]
 
 def gather_loop():
     
     while not is_shutdown:
         [d1,d2,var_volt_ac,var_current_ac,POWER] = gather_data()
-        conn.execute("INSERT INTO ac_parameters (DATE,TIME,VOLTAGE,CURRENT,POWER) \
-        VALUES ( ?, ?, ?, ?, ? )",(d1,d2,var_volt_ac,var_current_ac,POWER))
-        conn.commit()
-        time.sleep(0.5)
+        if(d1!=""):
+            conn.execute("INSERT INTO ac_parameters (DATE,TIME,VOLTAGE,CURRENT,POWER) \
+            VALUES ( ?, ?, ?, ?, ? )",(d1,d2,var_volt_ac,var_current_ac,POWER))
+            conn.commit()
+            time.sleep(0.5)
     conn.close()
 
 
