@@ -13,7 +13,13 @@ import socket
 import random
 
 s = socket.socket()
-s.connect(('127.0.0.1',12345))
+serverup =  False
+while serverup==False:
+    try:
+        s.connect(('127.0.0.1',12345))
+        serverup = True
+    except:
+        print("Broken pipe on server side restarting")
 
 
 path="file:/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db?mode=ro"
