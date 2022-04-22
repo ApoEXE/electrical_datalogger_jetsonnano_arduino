@@ -31,6 +31,9 @@ d1 = ""
 d2 = ""
 POWER = ""
 reset = 0
+redifine_current = 0.0
+redifine_voltage = 0.0
+
 index_data = int(0)
 path="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db"
 
@@ -58,7 +61,7 @@ conn.execute('''CREATE TABLE IF NOT EXISTS ac_parameters
 
 
 def gather_data():
-    global var_volt_ac, var_current_ac,bus,POWER,d1,d2
+    global var_volt_ac, var_current_ac,bus,POWER,d1,d2, redifine_voltage, redifine_current
     address = 0x20
     try:
 
@@ -71,20 +74,14 @@ def gather_data():
         anaVolt = ac_volt_dig*(realvolt / 1023.0)
         volt_in = anaVolt*(1000+880000)/1000
         volt_ac = (volt_in/1.4142135623730950488016887242097)+21
-        print('AC Voltage in ',end="")
 
-        print(str(round(volt_ac,2)),end="")
-
-        print(' Vac',end="")
 
 
         #current-----------
         ac_curr = read[0]<<8 | read[1]
-        print(' AC Current in ',end="")
+        
         ac_curr = ac_curr/1000.0
-        print(str(round(ac_curr,2)),end="")
-  
-        print(' A  ')
+
 
         
     except:
@@ -98,7 +95,10 @@ def gather_data():
     d2 = ""
     m_volt_ac = ""
     m_current_ac= ""
-    if(volt_ac < 300):
+    if(volt_ac < 300 and volt_ac > 200 and (redifine_current != round(ac_curr,2) or redifine_voltage != round(volt_ac,2))):
+
+        redifine_current = round(ac_curr,2)
+        redifine_voltage = round(volt_ac,2)
 
         var_volt_ac = str(round(volt_ac,2))
         m_volt_ac = var_volt_ac
@@ -122,6 +122,17 @@ def gather_loop():
             conn.execute("INSERT INTO ac_parameters (DATE,TIME,VOLTAGE,CURRENT,POWER) \
             VALUES ( ?, ?, ?, ?, ? )",(d1,d2,var_volt_ac,var_current_ac,POWER))
             conn.commit()
+            print('AC Voltage in ',end="")
+
+            print(var_volt_ac,end="")
+
+            print(' Vac',end="")
+
+            print(' AC Current in ',end="")
+            print(var_current_ac,end="")
+  
+            print(' A  ')
+
             time.sleep(0.5)
     conn.close()
     
@@ -138,12 +149,13 @@ def socket_loop():
         while not is_shutdown:
                 rcvdData = c.recv(4096)
                 print(f"S: {rcvdData}")
-                str_sendData = str([d1,d2,var_volt_ac,var_current_ac,POWER])
-                try:
-                    c.send(str_sendData.encode())
-                except:
-                    print("Broken pipe error on display.py")
-                    break
+                if(d1!=""):
+                    str_sendData = str([d1,d2,var_volt_ac,var_current_ac,POWER])
+                    try:
+                        c.send(str_sendData.encode())
+                    except:
+                        print("Broken pipe error on display.py")
+                        break
         s.close()
     
 
