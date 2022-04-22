@@ -4,7 +4,7 @@ import datetime
 import matplotlib
 matplotlib.use('Tkagg')
 import matplotlib.pyplot as plt
-path="ac_telemetry3.db"
+path="ac_telemetry.db"
 
 
 print(f"START at {datetime.datetime.now()}")
