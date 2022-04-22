@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3.8
 # FLASK_APP=app.py
 # FLASK_ENV=development
 # flask run
@@ -12,7 +12,7 @@ from flask import Flask, Response, render_template, request, session, jsonify
 
 
 from cv2 import sqrt
-import smbus
+import smbus2
 import time
 import datetime
 import signal
@@ -43,7 +43,7 @@ app = Flask(__name__)
 
 #print(f"FIRST ROW: {string_tmp}  {ac_value}")
 
-bus = smbus.SMBus(0)
+bus = smbus2.SMBus(0)
 
 conn = sqlite3.connect(path, check_same_thread=False)
 print ("Opened database successfully")
@@ -131,7 +131,7 @@ def socket_loop():
     while not is_shutdown:
         s = socket.socket()
         port = 12345
-        s.bind(('127.0.0.1', port))
+        s.bind(('0.0.0.0', port))
         s.listen(5)
         c, addr = s.accept()
         print (f"Socket Up and running with a connection from {addr}")

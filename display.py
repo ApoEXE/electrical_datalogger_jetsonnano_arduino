@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3.8
+#review https://docs.micropython.org/en/latest/esp8266/tutorial/ssd1306.html
 import time
 
 import Adafruit_SSD1306
