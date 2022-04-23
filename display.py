@@ -1,5 +1,7 @@
 #!/usr/local/bin/python3.8
 #review https://docs.micropython.org/en/latest/esp8266/tutorial/ssd1306.html
+
+#https://learn.adafruit.com/circuitpython-libraries-on-linux-and-the-nvidia-jetson-nano?view=all
 import time
 
 import board
