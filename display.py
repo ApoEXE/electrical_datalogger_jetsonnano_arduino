@@ -36,7 +36,7 @@ WIDTH = 128
 HEIGHT = 64  # Change to 64 if needed
 BORDER = 5
 # 128x32 display with hardware I2C:
-i2c = busio.I2C(board.SCL, board.SDA)
+i2c = busio.I2C(board.SCL_1, board.SDA_1)
 oled = adafruit_ssd1306.SSD1306_I2C(WIDTH, HEIGHT, i2c, addr=0x3c)
 # Clear display.
 oled.fill(0)
@@ -131,6 +131,8 @@ while True:
     oled.image(image)
     
     end = time.time()
+    oled.show()
+    '''
     if(end-start >5):
         print("time elapsed")
         start = end
@@ -139,6 +141,6 @@ while True:
         except:
             print(f"ERROR display 0x3C i2c disconnection")
 
-    
+    '''
         
 s.close()
