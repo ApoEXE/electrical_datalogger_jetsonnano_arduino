@@ -2,6 +2,8 @@
 # FLASK_APP=app.py
 # FLASK_ENV=development
 # flask run
+
+#ps -fA | grep python3
 from ast import While
 import json
 from threading import Thread
@@ -66,7 +68,9 @@ def gather_data():
     try:
 
         bus.write_byte_data(address, 0, 0x0A)
+        time.sleep(0.2)  # Wait for device to actually settle down
         read = bus.read_i2c_block_data(address,0,4)
+        time.sleep(0.2)  # Wait for device to actually settle down
 
         #VOLTAGE-----------
         ac_volt_dig = read[2]<<8 | read[3]
@@ -85,7 +89,7 @@ def gather_data():
 
         
     except:
-        print(f"ERROR gather 0x20 i2c disconnection")
+        #print(f"ERROR gather 0x20 i2c disconnection")
         volt_ac = 9999
         ac_curr = 9999
         POWER = 0
@@ -115,6 +119,7 @@ def gather_data():
     return [d1,d2,m_volt_ac,m_current_ac,POWER]
 
 def gather_loop():
+    print("Gathering DATA")
 
     while not is_shutdown:
         [d1,d2,var_volt_ac,var_current_ac,POWER] = gather_data()
@@ -135,6 +140,7 @@ def gather_loop():
 
             time.sleep(0.5)
     conn.close()
+    print("Gather thread stopped")
     
 
 def socket_loop():
@@ -148,7 +154,7 @@ def socket_loop():
         print (f"Socket Up and running with a connection from {addr}")
         while not is_shutdown:
                 rcvdData = c.recv(4096)
-                print(f"S: {rcvdData}")
+                #print(f"S: {rcvdData}")
                 if(d1!=""):
                     str_sendData = str([d1,d2,var_volt_ac,var_current_ac,POWER])
                     try:
@@ -171,6 +177,9 @@ def stop(sig, frame):
   global is_shutdown
   is_shutdown = True
   conn.close()
+  gather_thread.join()
+  
+  #socket_thread.join()
   exit(1)
 
 signal.signal(signal.SIGINT, stop)
@@ -217,6 +226,8 @@ if __name__ == '__main__':
     #gather_loop()
     #app.run(debug=True, threaded=True, host='0.0.0.0', port=5000)
     
+    while not  is_shutdown:
+        time.sleep(1)
 
     print(f"END at {datetime.datetime.now()}")
 
