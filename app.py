@@ -99,7 +99,8 @@ def gather_data():
     d2 = ""
     m_volt_ac = ""
     m_current_ac= ""
-    if(volt_ac < 300 and volt_ac > 200 and (redifine_current != round(ac_curr,2) or redifine_voltage != round(volt_ac,2))):
+    if(volt_ac < 300 and volt_ac > 200):
+    #if(volt_ac < 300 and volt_ac > 200 and (redifine_current != round(ac_curr,2) or redifine_voltage != round(volt_ac,2))):
 
         redifine_current = round(ac_curr,2)
         redifine_voltage = round(volt_ac,2)

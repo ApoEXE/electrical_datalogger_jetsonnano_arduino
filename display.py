@@ -11,35 +11,29 @@ from PIL import ImageFont
 import subprocess
 import socket
 
-import random
-
 import signal
 
 
 from threading import Thread
 
 
-
-
-
-path="file:/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db?mode=ro"
 # DECLARATIONS
 var_current_ac= ""
 var_volt_ac = ""
 var_date = ""
 var_time = ""
 
-serverup =  False
+serverup =  True
 
 s = socket.socket()
 
 
 def socket_loop():
     global var_date,var_time,var_current_ac,var_volt_ac, serverup
-    while serverup==False:
+    s.connect(('0.0.0.0',12345))
+    while serverup ==True:
         try:
-            s.connect(('127.0.0.1',12345))
-            serverup = True
+            
             send_to_server = "request from client"
             s.send(send_to_server.encode())
             data = s.recv(4096)
@@ -50,6 +44,7 @@ def socket_loop():
             var_current_ac = line[3]
             var_volt_ac = line[2]
             print(line)
+            time.sleep(0.2)
         except:
             print("Broken pipe on server side restarting")
         
@@ -60,14 +55,14 @@ socket_thread = Thread(target=socket_loop)
 
 
 def stop(sig, frame):
-
-  s.close()
-  exit(1)
+    serverup ==False
+    s.close()
+    exit(1)
 
 signal.signal(signal.SIGINT, stop)
 
 def display_oled():
-    global var_date,var_time,var_current_ac,var_volt_ac
+    global var_date,var_time,var_current_ac,var_volt_ac, serverup
     # 128x32 display with hardware I2C:
     disp = Adafruit_SSD1306.SSD1306_128_64(rst=None, i2c_bus=0, gpio=1) # setting gpio to 1 is hack to avoid platform detection
     time.sleep(0.2)  # Wait for device to actually settle down
@@ -105,7 +100,7 @@ def display_oled():
     lines_before = 0
     line = ''
     start = time.time()
-    while True:
+    while serverup == True:
         
         
                 # Draw a black filled box to clear the image.
