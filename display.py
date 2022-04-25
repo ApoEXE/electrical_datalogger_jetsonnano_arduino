@@ -10,6 +10,7 @@ from PIL import ImageFont
 
 import subprocess
 import socket
+import select
 
 import signal
 
@@ -24,43 +25,60 @@ var_date = ""
 var_time = ""
 
 serverup =  True
+reconnection =  True
 
-s = socket.socket()
 
 
 def socket_loop():
     global var_date,var_time,var_current_ac,var_volt_ac, serverup
-    s.connect(('0.0.0.0',12345))
-    while serverup ==True:
-        
+    while reconnection:
+        s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        s.settimeout(1.0)
+        print("Connnecting...")
         try:
-            
-            send_to_server = "request from client"
-            s.send(send_to_server.encode())
-            time.sleep(0.2)
-            data = s.recv(4096)
-            data = data.decode('utf-8')
-            line = eval(data)
-            var_date= line[0]
-            var_time=line[1]
-            var_current_ac = line[3]
-            var_volt_ac = line[2]
-            print(line)
-            time.sleep(0.2)
-
+            s.connect(("127.0.0.1",12345))
+            serverup=True
         except:
-            print("Broken pipe on server side restarting")
-            s.close()
-        
-        #line = data.split(",")
-    print("Exit socket_loop")
+            print("Connection refused")
+        while serverup ==True:
+            
+            try:
+                
+                send_to_server = "request from client"
+                s.send(send_to_server.encode())
+                time.sleep(0.2)
+                #ready = select.select([s], [], [], 1)
+                #if ready[0]:
+                    #data = s.recv(4096)
+                data = s.recv(4096)
+                data = data.decode('utf-8')
+                line = eval(data)
+                if(line[0]!=""):
+                    var_date= line[0]
+                    var_time=line[1]
+                    var_current_ac = line[3]
+                    var_volt_ac = line[2]
+                print(line)
+                time.sleep(0.2)
+
+            except:
+                print("Broken pipe on server side restarting")
+                time.sleep(10)
+                serverup=False
+                s.close()
+            
+            #line = data.split(",")
+        print("Exit socket_loop")
+    print("Exit socket_reconnection")
+
+
 socket_thread = Thread(target=socket_loop)
 
 
 
 def stop(sig, frame):
     serverup ==False
-    s.close()
+    reconnection =  False
     exit(1)
 
 signal.signal(signal.SIGINT, stop)
