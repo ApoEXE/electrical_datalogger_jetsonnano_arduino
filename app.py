@@ -139,7 +139,7 @@ def gather_loop():
   
             print(' A  ')
 
-            time.sleep(0.5)
+            time.sleep(0.2)
     conn.close()
     print("Gather thread stopped")
     

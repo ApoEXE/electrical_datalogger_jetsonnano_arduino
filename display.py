@@ -32,10 +32,12 @@ def socket_loop():
     global var_date,var_time,var_current_ac,var_volt_ac, serverup
     s.connect(('0.0.0.0',12345))
     while serverup ==True:
+        
         try:
             
             send_to_server = "request from client"
             s.send(send_to_server.encode())
+            time.sleep(0.2)
             data = s.recv(4096)
             data = data.decode('utf-8')
             line = eval(data)
@@ -45,11 +47,13 @@ def socket_loop():
             var_volt_ac = line[2]
             print(line)
             time.sleep(0.2)
+
         except:
             print("Broken pipe on server side restarting")
+            s.close()
         
         #line = data.split(",")
-
+    print("Exit socket_loop")
 socket_thread = Thread(target=socket_loop)
 
 
@@ -130,19 +134,17 @@ def display_oled():
         draw.text((x, top+48),  "DISK: " +  Disk.decode('utf-8') ,  font=font, fill=255)
         # Display image.
         disp.image(image)
-        time.sleep(0.2)  # Wait for device to actually settle down
-        disp.display()
         end = time.time()
-        time.sleep(0.2)  # Wait for device to actually settle down
-        '''
-        if(end-start >5):
+        if(end-start >1):
             print("time elapsed")
             start = end
             try:
+                time.sleep(0.2)  # Wait for device to actually settle down
                 disp.display()
+                time.sleep(0.2)  # Wait for device to actually settle down
             except:
                 print(f"ERROR display 0x3C i2c disconnection")
-            '''
+    print("Exit display_loop")
 #signal handling service
 
 
