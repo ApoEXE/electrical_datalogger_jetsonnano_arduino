@@ -6,7 +6,14 @@ After=aclogger.service
 [Service]
 Type=simple
 # WorkingDirectory=/code/python/myapp
+Restart=always
+RestartSec=1
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
+Restart=on-failure
+
 ExecStart=/home/nano/projects/display_multi_datalogger.sh
+
 # User=do-user
 
 [Install]
