@@ -106,6 +106,8 @@ def sensorLive():
     def generate_random_data():
         with app.app_context(): 
             global path,sql_dayrecords,cur,reset
+            newdate =[]
+            newCurrent = []
 
             if(reset==0):
                 power_list =getPower()
@@ -120,20 +122,28 @@ def sensorLive():
                 #newCurrent = power_list[1][:]
                 #print(power_float[0])
                 #print(f"total records {len(rows)-1}")
+                reset = 1
                 print(newdate[0])
                 print(newCurrent[0])
-                reset = 0
             else:
                 cur.execute(sql_lastrow)
                 rows = cur.fetchall()
-                newCurrent = rows[0][5]
-                newdate = str(rows[0][1]+" "+rows[0][2])
+                rows = list(rows)
+                print(rows)
+
+                #newCurrent = list(rows[0][5])
+                #newdate = list(str(rows[0][1]+" "+rows[0][2]))
+                #print(newdate)
+                #print(newCurrent)
+
             '''
             if(newdate != old_date):
                 old_date = newdate
                 #print(newdate)
                 #print(newCurrent)
             ''' 
+
+
             
             json_data = json.dumps({'date': newdate, 'current': newCurrent, 'reset':reset}, default=str)
             yield f"data:{json_data}\n\n"

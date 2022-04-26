@@ -6,8 +6,8 @@ from ast import While
 
 from threading import Thread
 import time
-import datetime
-from datetime import date,datetime
+
+from time import gmtime, strftime
 
 
 
@@ -35,9 +35,9 @@ redifine_voltage = 0.0
 
 index_data = int(0)
 path="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db"
+time_str=strftime("%Y-%m-%d %H:%M:%S", gmtime())
 
-
-print(f"START at {datetime.datetime.now()}")
+print(f"START at {time_str}")
 
 
 
@@ -60,7 +60,7 @@ conn.execute('''CREATE TABLE IF NOT EXISTS ac_parameters
 
 
 def gather_data():
-    global var_volt_ac, var_current_ac,bus,POWER,d1,d2, redifine_voltage, redifine_current
+    global var_volt_ac, var_current_ac,bus,POWER,d1,d2, redifine_voltage, redifine_current,time_str
     address = 0x20
     try:
 
@@ -107,12 +107,11 @@ def gather_data():
         
         var_current_ac = str(round(ac_curr,2))
         m_current_ac = var_current_ac
-        today = date.today()
-        d1 = today.strftime("%Y/%m/%d")
-        from datetime import datetime
-        now = datetime.now()
-        d2 = now.strftime("%H:%M:%S")
+        date_str,time_hr = strftime("%Y-%m-%d %H:%M:%S", gmtime()).split(" ")
+        d1 = date_str
+        d2 = time_hr
         POWER = str(round(volt_ac*ac_curr,2))
+
 
     return [d1,d2,m_volt_ac,m_current_ac,POWER]
 
@@ -171,14 +170,16 @@ socket_thread = Thread(target=socket_loop)
 #signal handling service
 
 def stop(sig, frame):
-  print(f"SIGTERM at {datetime.datetime.now()}")
-  global is_shutdown
-  is_shutdown = True
-  conn.close()
-  gather_thread.join()
-  
-  #socket_thread.join()
-  exit(1)
+    global time_str
+    time_str=strftime("%Y-%m-%d %H:%M:%S", gmtime())
+    print(f"SIGTERM at {time_str}")
+    global is_shutdown
+    is_shutdown = True
+    conn.close()
+    gather_thread.join()
+    
+    #socket_thread.join()
+    exit(1)
 
 signal.signal(signal.SIGINT, stop)
 
@@ -194,8 +195,8 @@ if __name__ == '__main__':
     
     while not  is_shutdown:
         time.sleep(1)
-
-    print(f"END at {datetime.datetime.now()}")
+    time_str=strftime("%Y-%m-%d %H:%M:%S", gmtime())
+    print(f"END at {time_str}")
 
     
     
