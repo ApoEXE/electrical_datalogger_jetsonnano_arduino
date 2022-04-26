@@ -3,7 +3,7 @@
 
 #ps -fA | grep python3
 from ast import While
-import json
+
 from threading import Thread
 import time
 import datetime
@@ -13,14 +13,13 @@ from datetime import date,datetime
 
 from cv2 import sqrt
 import smbus2
-import time
-import datetime
+
 import signal
 
 import sqlite3
 
 import socket
-import random
+
 
 is_shutdown = False
 realvolt = 4.59
