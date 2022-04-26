@@ -1,7 +1,5 @@
 #!/usr/local/bin/python3.8
-# FLASK_APP=app.py
-# FLASK_ENV=development
-# flask run
+
 
 #ps -fA | grep python3
 from ast import While
@@ -10,7 +8,7 @@ from threading import Thread
 import time
 import datetime
 from datetime import date,datetime
-from flask import Flask, Response, render_template, request, session, jsonify
+
 
 
 from cv2 import sqrt
@@ -42,7 +40,7 @@ path="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.
 
 print(f"START at {datetime.datetime.now()}")
 
-app = Flask(__name__)
+
 
 
 
@@ -75,7 +73,7 @@ def gather_data():
         #VOLTAGE-----------
         ac_volt_dig = read[2]<<8 | read[3]
         #print(ac_volt_dig)
-        anaVolt = ac_volt_dig*(realvolt / 1023.0)
+        anaVolt = (ac_volt_dig+0.5)*(realvolt / 1024.0)
         volt_in = anaVolt*(1000+880000)/1000
         volt_ac = (volt_in/1.4142135623730950488016887242097)+21
 
@@ -185,38 +183,6 @@ def stop(sig, frame):
 
 signal.signal(signal.SIGINT, stop)
 
-@app.route('/')
-def index():
-    return render_template('index.html', title='Sensor1', max=30)
-
-
-
-@app.route('/_sensor1', methods=['GET'])
-def sensorLive():
-    
-    def generate_random_data():
-        with app.app_context(): 
-            global data,index_data, var_current_ac
-            #[newVolt,newCurrent]=gather_data()
-            #newdate = ""
-            #newCurrent = 0.0
-            newCurrent = var_current_ac
-            newdate = datetime.datetime.now()
-            #newCurrent = var_current_ac
-            #print(var_current_ac)
-            #if(index_data < n_lines):
-            #    newdate =  data[int(index_data)][0] + " " + data[int(index_data)][1]
-            #    newCurrent = data[int(index_data)][4]
-            #if(index_data >= n_lines):
-            #    newdate = datetime.datetime.now()
-            #    newCurrent = var_current_ac
-
-            index_data=int(index_data)+1
-            json_data = json.dumps({'date': newdate, 'current': newCurrent, 'reset':reset}, default=str)
-            yield f"data:{json_data}\n\n"
-            time.sleep(1)
-
-    return Response(generate_random_data(), mimetype='text/event-stream')
 
 
 
@@ -224,8 +190,8 @@ if __name__ == '__main__':
    
     gather_thread.start()
     socket_thread.start()
-    #gather_loop()
-    #app.run(debug=True, threaded=True, host='0.0.0.0', port=5000)
+
+    
     
     while not  is_shutdown:
         time.sleep(1)

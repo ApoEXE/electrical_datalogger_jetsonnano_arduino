@@ -26,6 +26,7 @@ var_time = ""
 
 serverup =  True
 reconnection =  True
+displayup =  True
 
 
 
@@ -79,6 +80,7 @@ socket_thread = Thread(target=socket_loop)
 def stop(sig, frame):
     serverup ==False
     reconnection =  False
+    displayup = False
     exit(1)
 
 signal.signal(signal.SIGINT, stop)
@@ -122,7 +124,7 @@ def display_oled():
     lines_before = 0
     line = ''
     start = time.time()
-    while serverup == True:
+    while displayup == True:
         
         
                 # Draw a black filled box to clear the image.
