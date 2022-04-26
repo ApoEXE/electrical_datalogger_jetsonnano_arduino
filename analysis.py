@@ -3,7 +3,7 @@
 # FLASK_ENV=development
 # flask run
 import sqlite3
-from datetime import datetime
+import datetime as dt
 import numpy as np
 import matplotlib
 matplotlib.use('Tkagg')
@@ -12,6 +12,8 @@ from flask import Flask, Response, render_template, request, session, jsonify
 import json
 
 import time
+
+import subprocess
 
 reset = 0
 old_date = ""
@@ -23,7 +25,8 @@ app = Flask(__name__)
 
 
 sql_lastrow = "SELECT * FROM ac_parameters ORDER BY id DESC LIMIT 1;"
-sql_dayrecords =" select * from ac_parameters where date > '2022/04/25' and time > '00:00:00' and time < '23:59:00' and voltage > 200 ;"
+sql_dayrecords =" select * from ac_parameters where date > '2022/04/25' and time > '00:00:00' and time < '00:59:00' and voltage > 200 ;"
+#sql_avg_minute ="select avg(power) from ac_parameters where date >= '2022/04/25' and time >= '?' and time <= '?' and voltage > 200;"
 
 
 def matplot_records():
@@ -77,21 +80,24 @@ def sensorLive():
         with app.app_context(): 
             global path,sql_dayrecords,cur,reset
 
-            cur.execute(sql_dayrecords)
-            rows = cur.fetchall()
+
 
 
 
             if(reset==0):
                 cur.execute(sql_dayrecords)
                 rows = cur.fetchall()
-                date=[s1[1]+" "+s1[2] for s1 in rows]
-                #time_clock=[sl[2] for sl in rows]
-                power=[sl[5] for sl in rows]
                 
+                date=[s1[1]+" "+s1[2] for s1 in rows]
+                time_clock=[sl[2] for sl in rows]
+                power=[sl[5] for sl in rows]
+                power_float=[float(sl[5]) for sl in rows]
+
                 newdate=date
                 newCurrent = power
-                print(date[0])
+                print(power_float[0])
+                print(f"total records {len(rows)-1}")
+                reset = 1
             else:
                 cur.execute(sql_lastrow)
                 rows = cur.fetchall()
@@ -106,11 +112,32 @@ def sensorLive():
             
             json_data = json.dumps({'date': newdate, 'current': newCurrent, 'reset':reset}, default=str)
             yield f"data:{json_data}\n\n"
-            reset = 1
+            
             time.sleep(1)
 
     return Response(generate_random_data(), mimetype='text/event-stream')
 
 if __name__ == '__main__':
     reset = 0
-    app.run(debug=True, threaded=True, host='172.23.6.205', port=5000)
+    power_list = []
+    #app.run(debug=True, threaded=True, host='172.23.6.205', port=5000)
+    db_backup = "ac_telemetry_backup.db"
+    cmd = "cp -a ac_telemetry.db ac_telemetry_backup.db"
+    returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
+    print('returned value:', returned_value)
+    conn = sqlite3.connect(db_backup, check_same_thread=False)
+    db = conn.cursor()
+    for hour in range(24):
+        for min in range(59):
+            t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
+            t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
+            sql_avg_minute ="select avg(power) from ac_parameters where date >= '2022/04/25' and time >= ? and time <= ? and voltage > 200;"
+            #print(t2,end=" ")
+            #print(t1,end=" ")
+            db.execute(sql_avg_minute,(str(t1),str(t2)))
+            rows= db.fetchall()#average power
+            power_raw=[sl[0] for sl in rows]
+            #print(list(power_raw))
+            power_list.append([str(t2),power_raw])
+
+    print(power_list)
