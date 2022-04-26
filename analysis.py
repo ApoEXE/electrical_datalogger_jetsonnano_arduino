@@ -13,8 +13,8 @@ import json
 
 import time
 
-reset = 0.0
-
+reset = 0
+old_date = ""
 path="ac_telemetry.db"
 conn = sqlite3.connect(path, check_same_thread=False)
 cur = conn.cursor()
@@ -23,7 +23,7 @@ app = Flask(__name__)
 
 
 sql_lastrow = "SELECT * FROM ac_parameters ORDER BY id DESC LIMIT 1;"
-sql_dayrecords =" select * from ac_parameters where date > '2022/04/24' and time > '00:00:00' and time < '23:59:59' and voltage > 200 ;"
+sql_dayrecords =" select * from ac_parameters where date > '2022/04/25' and time > '00:00:00' and time < '23:59:00' and voltage > 200 ;"
 
 
 def matplot_records():
@@ -75,22 +75,42 @@ def sensorLive():
     
     def generate_random_data():
         with app.app_context(): 
-            global path,sql_lastrow,cur
+            global path,sql_dayrecords,cur,reset
 
-            cur.execute(sql_lastrow)
+            cur.execute(sql_dayrecords)
             rows = cur.fetchall()
-    
-            newCurrent = rows[0][5]
-            newdate = str(rows[0][1]+" "+rows[0][2])
-            print(newdate)
-            print(newCurrent)
 
+
+
+            if(reset==0):
+                cur.execute(sql_dayrecords)
+                rows = cur.fetchall()
+                date=[s1[1]+" "+s1[2] for s1 in rows]
+                #time_clock=[sl[2] for sl in rows]
+                power=[sl[5] for sl in rows]
+                
+                newdate=date
+                newCurrent = power
+                print(date[0])
+            else:
+                cur.execute(sql_lastrow)
+                rows = cur.fetchall()
+                newCurrent = rows[0][5]
+                newdate = str(rows[0][1]+" "+rows[0][2])
+            '''
+            if(newdate != old_date):
+                old_date = newdate
+                #print(newdate)
+                #print(newCurrent)
+            ''' 
             
             json_data = json.dumps({'date': newdate, 'current': newCurrent, 'reset':reset}, default=str)
             yield f"data:{json_data}\n\n"
+            reset = 1
             time.sleep(1)
 
     return Response(generate_random_data(), mimetype='text/event-stream')
 
 if __name__ == '__main__':
+    reset = 0
     app.run(debug=True, threaded=True, host='172.23.6.205', port=5000)

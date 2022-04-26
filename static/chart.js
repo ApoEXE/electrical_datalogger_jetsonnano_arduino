@@ -5,7 +5,7 @@ $(document).ready(function () {
             data: {
                 labels: [],
                 datasets: [{
-                    label: "AC Current",
+                    label: "Power W",
                     backgroundColor: 'rgb(255, 99, 132)',
                     borderColor: 'rgb(255, 99, 132)',
                     data: [],
@@ -19,7 +19,7 @@ $(document).ready(function () {
                 },
                 title: {
                     display: true,
-                    text: 'AC Current real time Plotting'
+                    text: 'Power (W) real time Plotting'
                 },
                 tooltips: {
                     mode: 'index',
@@ -56,25 +56,32 @@ $(document).ready(function () {
 
         source.onmessage = function (event) {
             const data = JSON.parse(event.data);
+            
+/*
             if(data.reset==1){
                 config.data.labels=[];
                 config.data.datasets[0].data=[];
+                console.log();
             }
             if (config.data.labels.length === 2000) {
                 config.data.labels.shift();
                 config.data.datasets[0].data.shift();
             }
         
-            /*
+           */ 
+          if(data.reset==0){
             for (let index = 0; index < data.date.length; index++) {
                 config.data.labels.push(data.date[index]);
-                config.data.datasets[0].data.push(data.temp[index]);
+                config.data.datasets[0].data.push(data.current[index]);
+                console.log(data.current[index])
                 lineChart.update();
                 
+                
             }
-            */
-           config.data.labels.push(data.date);
-           config.data.datasets[0].data.push(data.current);
+          }else{
+            config.data.labels.push(data.date);
+            config.data.datasets[0].data.push(data.current);
+          }
            lineChart.update();
         }
         
