@@ -18,6 +18,11 @@ import subprocess
 reset = 0
 old_date = ""
 path="ac_telemetry.db"
+db_backup = "ac_telemetry_backup.db"
+cmd = "cp -a ac_telemetry.db ac_telemetry_backup.db"
+returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
+print("databased backed")
+time.sleep(1)
 conn = sqlite3.connect(path, check_same_thread=False)
 cur = conn.cursor()
 
@@ -66,6 +71,28 @@ def matplot_records():
 
     plt.show()
 
+def getPower():
+    global db_backup
+    power_list = []
+
+    conn = sqlite3.connect(db_backup, check_same_thread=False)
+    db = conn.cursor()
+    for hour in range(1):
+        for min in range(59):
+            t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
+            t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
+            sql_avg_minute ="select avg(power) from ac_parameters where date >= '2022/04/25' and time >= ? and time <= ? and voltage > 200;"
+            #print(t2,end=" ")
+            #print(t1,end=" ")
+            db.execute(sql_avg_minute,(str(t1),str(t2)))
+            rows= db.fetchall()#average power
+            power_raw=[sl[0] for sl in rows]
+            #print(power_raw[0])
+            power_list.append((str(t2),power_raw[0]))
+
+    #print(power_list)
+
+    return power_list
 
 @app.route('/')
 def index():
@@ -80,24 +107,22 @@ def sensorLive():
         with app.app_context(): 
             global path,sql_dayrecords,cur,reset
 
-
-
-
-
             if(reset==0):
-                cur.execute(sql_dayrecords)
-                rows = cur.fetchall()
+                power_list =getPower()
                 
-                date=[s1[1]+" "+s1[2] for s1 in rows]
-                time_clock=[sl[2] for sl in rows]
-                power=[sl[5] for sl in rows]
-                power_float=[float(sl[5]) for sl in rows]
-
-                newdate=date
-                newCurrent = power
-                print(power_float[0])
-                print(f"total records {len(rows)-1}")
-                reset = 1
+                #date=[s1[1]+" "+s1[2] for s1 in rows]
+                #time_clock=[sl[2] for sl in rows]
+                #power=[sl[5] for sl in rows]
+                #power_float=[float(sl[5]) for sl in rows]
+                newdate = [date[0] for date in power_list]
+                newCurrent = [power[1] for power in power_list]
+                #newdate=power_list[0][:]
+                #newCurrent = power_list[1][:]
+                #print(power_float[0])
+                #print(f"total records {len(rows)-1}")
+                print(newdate[0])
+                print(newCurrent[0])
+                reset = 0
             else:
                 cur.execute(sql_lastrow)
                 rows = cur.fetchall()
@@ -119,25 +144,6 @@ def sensorLive():
 
 if __name__ == '__main__':
     reset = 0
-    power_list = []
-    #app.run(debug=True, threaded=True, host='172.23.6.205', port=5000)
-    db_backup = "ac_telemetry_backup.db"
-    cmd = "cp -a ac_telemetry.db ac_telemetry_backup.db"
-    returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
-    print('returned value:', returned_value)
-    conn = sqlite3.connect(db_backup, check_same_thread=False)
-    db = conn.cursor()
-    for hour in range(24):
-        for min in range(59):
-            t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
-            t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
-            sql_avg_minute ="select avg(power) from ac_parameters where date >= '2022/04/25' and time >= ? and time <= ? and voltage > 200;"
-            #print(t2,end=" ")
-            #print(t1,end=" ")
-            db.execute(sql_avg_minute,(str(t1),str(t2)))
-            rows= db.fetchall()#average power
-            power_raw=[sl[0] for sl in rows]
-            #print(list(power_raw))
-            power_list.append([str(t2),power_raw])
-
-    print(power_list)
+    
+    app.run(debug=True, threaded=True, host='172.23.6.205', port=5000)
+    #getPower()
