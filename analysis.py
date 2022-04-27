@@ -5,9 +5,9 @@
 import sqlite3
 import datetime as dt
 import numpy as np
-import matplotlib
-matplotlib.use('Tkagg')
-import matplotlib.pyplot as plt
+#import matplotlib
+#matplotlib.use('Tkagg')
+#import matplotlib.pyplot as plt
 from flask import Flask, Response, render_template, request, session, jsonify
 import json
 
@@ -74,21 +74,23 @@ def matplot_records():
 def getPower():
     global db_backup
     power_list = []
+    date_find ='2022/04/25'
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
-    for hour in range(1):
+    for hour in range(24):
         for min in range(59):
             t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
             t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
-            sql_avg_minute ="select avg(power) from ac_parameters where date >= '2022/04/25' and time >= ? and time <= ? and voltage > 200;"
+            sql_avg_minute ="select avg(power) from ac_parameters where date >= ? and time >= ? and time <= ? and voltage > 200;"
             #print(t2,end=" ")
             #print(t1,end=" ")
-            db.execute(sql_avg_minute,(str(t1),str(t2)))
+            db.execute(sql_avg_minute,(date_find,str(t1),str(t2)))
             rows= db.fetchall()#average power
+
             power_raw=[sl[0] for sl in rows]
             #print(power_raw[0])
-            power_list.append((str(t2),power_raw[0]))
+            power_list.append((date_find+" "+str(t2),power_raw[0]))
 
     #print(power_list)
 
@@ -129,10 +131,11 @@ def sensorLive():
                 cur.execute(sql_lastrow)
                 rows = cur.fetchall()
                 rows = list(rows)
-                print(rows)
+                print(f"else: {rows[0][1]}")
+                print(f"else: {rows[0][5]}")
 
-                #newCurrent = list(rows[0][5])
-                #newdate = list(str(rows[0][1]+" "+rows[0][2]))
+                newCurrent = rows[0][5]
+                newdate = rows[0][1]+" "+rows[0][2]
                 #print(newdate)
                 #print(newCurrent)
 
@@ -155,5 +158,5 @@ def sensorLive():
 if __name__ == '__main__':
     reset = 0
     
-    app.run(debug=True, threaded=True, host='172.23.6.205', port=5000)
+    app.run(debug=True, threaded=True, host='127.0.0.1', port=5000)
     #getPower()

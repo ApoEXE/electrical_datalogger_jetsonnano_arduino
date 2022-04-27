@@ -54,6 +54,7 @@ $(document).ready(function () {
 
         const source = new EventSource("/_sensor1");
 
+        reset_value = 0;
         source.onmessage = function (event) {
             const data = JSON.parse(event.data);
             
@@ -69,13 +70,15 @@ $(document).ready(function () {
             }
         
            */ 
-          if(data.reset==0){
+        console.log(data.reset)
+          if(reset_value==0){
             for (let index = 0; index < data.date.length; index++) {
+                console.log(data.date.length)
                 config.data.labels.push(data.date[index]);
                 config.data.datasets[0].data.push(data.current[index]);
-                console.log(data.current[index])
+                console.log(data.reset)
                 lineChart.update();
-                
+                reset_value=data.reset;
                 
             }
           }else{

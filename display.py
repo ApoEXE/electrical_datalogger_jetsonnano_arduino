@@ -14,6 +14,7 @@ import select
 
 import signal
 
+from time import gmtime, strftime
 
 from threading import Thread
 
@@ -150,7 +151,8 @@ def display_oled():
         draw.text((x, top+16),   "TIME: " + var_time,  font=font, fill=255)
         draw.text((x, top+24),  "AMP: " +  var_current_ac + " A",  font=font, fill=255)
         draw.text((x, top+32),  "VOLT: " +  var_volt_ac + " V",  font=font, fill=255)
-        draw.text((x, top+40),     CPU.decode('utf-8'), font=font, fill=255)
+        date,time_str=strftime("%Y-%m-%d %H:%M:%S", gmtime()).split(" ")
+        draw.text((x, top+40),     time_str, font=font, fill=255)
         draw.text((x, top+48),  "DISK: " +  Disk.decode('utf-8') ,  font=font, fill=255)
         # Display image.
         disp.image(image)
