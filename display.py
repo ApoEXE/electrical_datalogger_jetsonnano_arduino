@@ -1,5 +1,7 @@
 #!/usr/local/bin/python3.8
 #review https://docs.micropython.org/en/latest/esp8266/tutorial/ssd1306.html
+from cmath import e
+from email.utils import localtime
 import time
 
 import Adafruit_SSD1306
@@ -10,11 +12,11 @@ from PIL import ImageFont
 
 import subprocess
 import socket
-import select
+
 
 import signal
 
-from time import gmtime, strftime
+
 
 from threading import Thread
 
@@ -32,42 +34,51 @@ displayup =  True
 
 
 def socket_loop():
-    global var_date,var_time,var_current_ac,var_volt_ac, serverup
+    global var_date,var_time,var_current_ac,var_volt_ac, serverup,reconnection
     while reconnection:
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         s.settimeout(1.0)
         print("Connnecting...")
         try:
+            
             s.connect(("127.0.0.1",12345))
             serverup=True
-        except:
+            print("connected")
+        except Exception as e:
             print("Connection refused")
+            print(e)
         while serverup ==True:
             
             try:
-                
+                time.sleep(1)
+                print("send to server")
                 send_to_server = "request from client"
                 s.send(send_to_server.encode())
-                time.sleep(0.2)
+                #time.sleep(0.2)
                 #ready = select.select([s], [], [], 1)
                 #if ready[0]:
                     #data = s.recv(4096)
-                data = s.recv(4096)
+                print("receive")
+                data = s.recv(100)
                 data = data.decode('utf-8')
+                #time.sleep(0.2)
+                #print(data)
                 line = eval(data)
                 if(line[0]!=""):
                     var_date= line[0]
                     var_time=line[1]
                     var_current_ac = line[3]
                     var_volt_ac = line[2]
-                print(line)
-                time.sleep(0.2)
-
-            except:
+                    print(line)
+            except Exception as e:
                 print("Broken pipe on server side restarting")
-                time.sleep(10)
+                print(e)
+                #time.sleep(10)
                 serverup=False
+                #reconnection=False
                 s.close()
+        
+            
             
             #line = data.split(",")
         print("Exit socket_loop")
@@ -79,6 +90,7 @@ socket_thread = Thread(target=socket_loop)
 
 
 def stop(sig, frame):
+    global reconnection, serverup, displayup
     serverup ==False
     reconnection =  False
     displayup = False
@@ -122,8 +134,7 @@ def display_oled():
     font = ImageFont.load_default()
 
     print("ready to display")
-    lines_before = 0
-    line = ''
+
     start = time.time()
     while displayup == True:
         
@@ -151,8 +162,9 @@ def display_oled():
         draw.text((x, top+16),   "TIME: " + var_time,  font=font, fill=255)
         draw.text((x, top+24),  "AMP: " +  var_current_ac + " A",  font=font, fill=255)
         draw.text((x, top+32),  "VOLT: " +  var_volt_ac + " V",  font=font, fill=255)
-        date,time_str=strftime("%Y-%m-%d %H:%M:%S", gmtime()).split(" ")
-        draw.text((x, top+40),     time_str, font=font, fill=255)
+        named_tuple = time.localtime() # get struct_time
+        date,time_str=time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
+        draw.text((x, top+40),   date+"."+time_str, font=font, fill=255)
         draw.text((x, top+48),  "DISK: " +  Disk.decode('utf-8') ,  font=font, fill=255)
         # Display image.
         disp.image(image)
@@ -164,8 +176,9 @@ def display_oled():
                 time.sleep(0.2)  # Wait for device to actually settle down
                 disp.display()
                 time.sleep(0.2)  # Wait for device to actually settle down
-            except:
+            except Exception as e:
                 print(f"ERROR display 0x3C i2c disconnection")
+                print(e)
     print("Exit display_loop")
 #signal handling service
 
