@@ -108,7 +108,7 @@ def gather_data():
     POWER = 0.0
     if(end-start >=1 and samples!=0):
         start = end
-    
+
         current_avg = round(redifine_current/samples,2)
         voltage_avg = round(redifine_voltage/samples,2)
 
@@ -120,6 +120,9 @@ def gather_data():
         d1 = date_str
         d2 = time_hr
         POWER = str(round(voltage_avg*current_avg,2))
+        redifine_current = 0
+        redifine_voltage =0
+        samples =0
 
 
     return [d1,d2,m_volt_ac,m_current_ac,POWER]
