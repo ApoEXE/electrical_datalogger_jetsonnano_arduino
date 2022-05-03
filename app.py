@@ -70,26 +70,40 @@ def gather_data():
 
         bus.write_byte_data(address, 0, 0x0A)
         time.sleep(0.2)  # Wait for device to actually settle down
-        read = bus.read_i2c_block_data(address,0,4)
+        read = bus.read_i2c_block_data(address,0,8)
         time.sleep(0.2)  # Wait for device to actually settle down
-
+        bus.write_byte_data(address, 0, 0x0B)
+        time.sleep(0.2)  # Wait for device to actually settle down
         #VOLTAGE-----------
-        ac_volt_dig = read[2]<<8 | read[3]
+        #ac_volt_dig = read[2]<<8 | read[3]
         #print(ac_volt_dig)
-        anaVolt = (ac_volt_dig+0.5)*(realvolt / 1024.0)
-        volt_in = anaVolt*(1000+880000)/1000
-        volt_ac = (volt_in/1.4142135623730950488016887242097)+21
+        #anaVolt = (ac_volt_dig+0.5)*(realvolt / 1024.0)
+        #volt_in = anaVolt*(1000+880000)/1000
+        #volt_ac = (volt_in/1.4142135623730950488016887242097)+21
+
+        
+        #--reading from panel power
+        ac_volt_dig_panel = read[6]<<8 | read[7]
+        anaVolt_panel = (ac_volt_dig_panel+0.5)*(realvolt / 1024.0)
+        volt_in_panel = anaVolt_panel*(28200+10000)/10000
+        volt_ac = round(volt_in_panel,2)
+        #--reading from panel current
+        ac_curr_dig_panel = read[4]<<8 | read[5]  
+        ac_curr_dig_panel = ac_curr_dig_panel/1000
+        ac_curr = round(ac_curr_dig_panel,2)
+
 
 
 
         #current-----------
-        ac_curr = read[0]<<8 | read[1]
+        #ac_curr = read[0]<<8 | read[1]
         
-        ac_curr = ac_curr/1000.0
-        if(volt_ac < 300 and volt_ac > 200):
-            redifine_current += ac_curr
-            redifine_voltage +=volt_ac
-            samples +=1
+        #ac_curr = ac_curr/1000.0
+        
+        #if(volt_ac < 300 and volt_ac > 200):
+        redifine_current += ac_curr
+        redifine_voltage +=volt_ac
+        samples +=1
             
         
     except Exception as e:
@@ -139,13 +153,15 @@ def gather_loop():
             conn.commit()
             print(d1,end=" ")
             print(d2,end=" ")
-            print('AC Voltage in ',end="")
+            #print(f"panel solar: {volt_ac }V")
+            #print(f"panel solar: {ac_curr }A",)
+            print('Panel Voltage in ',end="")
 
             print(var_volt_ac,end="")
 
-            print(' Vac',end="")
+            print(' V',end="")
 
-            print(' AC Current in ',end="")
+            print(' Panel Current in ',end="")
             print(var_current_ac,end="")
   
             print(' A  ')

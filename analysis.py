@@ -14,7 +14,7 @@ import json
 import time
 
 import subprocess
-
+power_list =[]
 reset = 0
 old_date = ""
 path="ac_telemetry.db"
@@ -30,54 +30,20 @@ app = Flask(__name__)
 
 
 sql_lastrow = "SELECT * FROM ac_parameters ORDER BY id DESC LIMIT 1;"
-sql_dayrecords =" select * from ac_parameters where date > '2022/04/25' and time > '00:00:00' and time < '00:59:00' and voltage > 200 ;"
+sql_dayrecords =" select * from ac_parameters where date > '2022/04/29' and time > '00:00:00' and time < '00:59:00' and voltage > 200 ;"
 #sql_avg_minute ="select avg(power) from ac_parameters where date >= '2022/04/25' and time >= '?' and time <= '?' and voltage > 200;"
 
 
-def matplot_records():
-    #
 
-    cur.execute(sql_lastrow)
-    rows = cur.fetchall()
-
-    print("Total rows are:  ", len(rows))
-    print(rows[0])
-    print(rows[len(rows)-1])
-    date=[sl[1] for sl in rows]
-    time_clock=[sl[2] for sl in rows]
-    power=[sl[5] for sl in rows]
-    power_np = np.array(power)
-
-    times = np.array(time_clock)
-    #times = np.array([datetime.strptime(time, '%H:%M:%S') for time in  time_clock])
-    print(times)
-    #time_deltas = np.array([(time - times[0]).total_seconds()/60. for time in times])
-    #print(f"lenght of time deltas: {len(time_deltas)}")
-
-    plt_times = times
-    plt_values = power_np
-
-    #plt_times = times[time_deltas%10==0]
-    #plt_values = power_np[time_deltas%10==0]
-
-
-    plt.plot_date(plt_times, plt_values, 'b-')
-    plt.show()
-
-    #plt.plot(time, power, 'b-')
-    #plt.xticks(time, rotation='vertical')
-    #plt.plot([1,2,3,4], [1,2,3,4], 'b-')
-    #plt.axis([0, 6, 0, 20])
-
-    plt.show()
 
 def getPower():
-    global db_backup
+    global db_backup,power_list
     power_list = []
-    date_find ='2022/04/25'
+    date_find ='2022-04-29'
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
+    print("getting list")
     for hour in range(24):
         for min in range(59):
             t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
@@ -85,14 +51,20 @@ def getPower():
             sql_avg_minute ="select avg(power) from ac_parameters where date >= ? and time >= ? and time <= ? and voltage > 200;"
             #print(t2,end=" ")
             #print(t1,end=" ")
+            
             db.execute(sql_avg_minute,(date_find,str(t1),str(t2)))
-            rows= db.fetchall()#average power
 
-            power_raw=[sl[0] for sl in rows]
-            #print(power_raw[0])
+            rows= db.fetchall()#average power
+            #print(rows)
+            #print(f"total records {rows[0]} time {t2}")
+            print(".", end="")
+            power_raw=[round(sl[0],2) for sl in rows]
+            
+
+            
             power_list.append((date_find+" "+str(t2),power_raw[0]))
 
-    #print(power_list)
+    print("done with list")
 
     return power_list
 
@@ -107,12 +79,12 @@ def sensorLive():
     
     def generate_random_data():
         with app.app_context(): 
-            global path,sql_dayrecords,cur,reset
+            global path,sql_dayrecords,cur,reset,power_list
             newdate =[]
             newCurrent = []
 
             if(reset==0):
-                power_list =getPower()
+                
                 
                 #date=[s1[1]+" "+s1[2] for s1 in rows]
                 #time_clock=[sl[2] for sl in rows]
@@ -120,34 +92,23 @@ def sensorLive():
                 #power_float=[float(sl[5]) for sl in rows]
                 newdate = [date[0] for date in power_list]
                 newCurrent = [power[1] for power in power_list]
+                
                 #newdate=power_list[0][:]
                 #newCurrent = power_list[1][:]
-                #print(power_float[0])
-                #print(f"total records {len(rows)-1}")
+                print(f"total records {len(newdate)-1}")
                 reset = 1
-                print(newdate[0])
-                print(newCurrent[0])
+                
             else:
                 cur.execute(sql_lastrow)
                 rows = cur.fetchall()
                 rows = list(rows)
-                print(f"else: {rows[0][1]}")
-                print(f"else: {rows[0][5]}")
+                print(f"else: {rows[0][1]}",end=" ")
+                print(rows[0][5])
 
                 newCurrent = rows[0][5]
                 newdate = rows[0][1]+" "+rows[0][2]
                 #print(newdate)
                 #print(newCurrent)
-
-            '''
-            if(newdate != old_date):
-                old_date = newdate
-                #print(newdate)
-                #print(newCurrent)
-            ''' 
-
-
-            
             json_data = json.dumps({'date': newdate, 'current': newCurrent, 'reset':reset}, default=str)
             yield f"data:{json_data}\n\n"
             
@@ -157,6 +118,6 @@ def sensorLive():
 
 if __name__ == '__main__':
     reset = 0
-    
-    app.run(debug=True, threaded=True, host='127.0.0.1', port=5000)
+    power_list =getPower()
+    app.run(debug=True, threaded=True, host='0.0.0.0', port=5000)
     #getPower()
