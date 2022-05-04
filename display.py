@@ -26,6 +26,9 @@ var_current_ac= ""
 var_volt_ac = ""
 var_date = ""
 var_time = ""
+var_panel_volt = ""
+var_panel_curr = ""
+var_panel_power = ""
 
 serverup =  True
 reconnection =  True
@@ -34,7 +37,7 @@ displayup =  True
 
 
 def socket_loop():
-    global var_date,var_time,var_current_ac,var_volt_ac, serverup,reconnection
+    global var_date,var_time,var_current_ac,var_volt_ac, serverup,reconnection,var_panel_volt,var_panel_curr
     while reconnection:
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         s.settimeout(1.0)
@@ -69,6 +72,8 @@ def socket_loop():
                     var_time=line[1]
                     var_current_ac = line[3]
                     var_volt_ac = line[2]
+                    var_panel_volt = line[5]
+                    var_panel_curr = line[6]
                     print(line)
             except Exception as e:
                 print("Broken pipe on server side restarting")
@@ -99,7 +104,7 @@ def stop(sig, frame):
 signal.signal(signal.SIGINT, stop)
 
 def display_oled():
-    global var_date,var_time,var_current_ac,var_volt_ac, serverup
+    global var_date,var_time,var_current_ac,var_volt_ac, serverup,var_panel_volt,var_panel_curr
     # 128x32 display with hardware I2C:
     disp = Adafruit_SSD1306.SSD1306_128_64(rst=None, i2c_bus=0, gpio=1) # setting gpio to 1 is hack to avoid platform detection
     time.sleep(0.2)  # Wait for device to actually settle down
@@ -157,7 +162,7 @@ def display_oled():
         Date = subprocess.check_output(cmd, shell = True )
 
                 # Write two lines of text.
-        draw.text((x, top),       "IP: " + IP.decode('utf-8'),  font=font, fill=255)
+        draw.text((x, top),       "PV (V): " +var_panel_volt,  font=font, fill=255)
         draw.text((x, top+8),   "DATE: " + var_date,  font=font, fill=255)
         draw.text((x, top+16),   "TIME: " + var_time,  font=font, fill=255)
         draw.text((x, top+24),  "AMP: " +  var_current_ac + " A",  font=font, fill=255)
@@ -165,7 +170,7 @@ def display_oled():
         named_tuple = time.localtime() # get struct_time
         date,time_str=time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
         draw.text((x, top+40),   date+"."+time_str, font=font, fill=255)
-        draw.text((x, top+48),  "DISK: " +  Disk.decode('utf-8') ,  font=font, fill=255)
+        draw.text((x, top+48),  "PV (A): " +  var_panel_curr ,  font=font, fill=255)
         # Display image.
         disp.image(image)
         end = time.time()
