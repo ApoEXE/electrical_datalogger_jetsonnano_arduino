@@ -78,13 +78,16 @@ $(document).ready(function () {
                 config.data.datasets[0].data.push(data.current[index]);
                 console.log(data.reset)
                 lineChart.update();
-                reset_value=data.reset;
+                if(data.date.length>1){
+                reset_value=1;
+                }
                 
             }
-          }else{
-            config.data.labels.push(data.date);
-            config.data.datasets[0].data.push(data.current);
           }
+          //else{ //to push one by one real time
+            //config.data.labels.push(data.date);
+            //config.data.datasets[0].data.push(data.current);
+          //}
            lineChart.update();
         }
         

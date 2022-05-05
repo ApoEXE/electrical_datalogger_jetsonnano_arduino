@@ -4,6 +4,7 @@
 # flask run
 import sqlite3
 import datetime as dt
+
 import numpy as np
 #import matplotlib
 #matplotlib.use('Tkagg')
@@ -28,18 +29,29 @@ cur = conn.cursor()
 
 app = Flask(__name__)
 
+from datetime import datetime, timedelta
+from tzlocal import get_localzone # pip install tzlocal
 
-sql_lastrow = "SELECT * FROM ac_parameters ORDER BY id DESC LIMIT 1;"
-sql_dayrecords =" select * from ac_parameters where date > '2022/04/29' and time > '00:00:00' and time < '00:59:00' and voltage > 200 ;"
+DAY = timedelta(1)
+local_tz = get_localzone()   # get local timezone
+now = datetime.now(local_tz) # get timezone-aware datetime object
+day_ago = local_tz.normalize(now - DAY) # exactly 24 hours ago, time may differ
+naive = now.replace(tzinfo=None) - DAY # same time
+yesterday = local_tz.localize(naive, is_dst=None) # but elapsed hours may differ
+date_yesterday,hour = str(yesterday).split(" ")
+print(date_yesterday)
+
+sql_lastrow = "SELECT * FROM parameters ORDER BY id DESC LIMIT 1;"
+sql_dayrecords =f" select * from parameters where date > '{date_yesterday}' and time > '00:00:00' and time < '00:59:00' and voltage > 200 ;"
 #sql_avg_minute ="select avg(power) from ac_parameters where date >= '2022/04/25' and time >= '?' and time <= '?' and voltage > 200;"
 
 
 
 
 def getPower():
-    global db_backup,power_list
+    global db_backup,power_list,date_yesterday
     power_list = []
-    date_find ='2022-04-29'
+    date_find =date_yesterday
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
@@ -48,7 +60,9 @@ def getPower():
         for min in range(59):
             t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
             t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
-            sql_avg_minute ="select avg(power) from ac_parameters where date >= ? and time >= ? and time <= ? and voltage > 200;"
+            #sql_avg_minute ="select avg(power) from parameters where date >= ? and time >= ? and time <= ? and voltage > 200;"
+            #sql_avg_minute ="select avg(PANEL_VOLTAGE) from parameters where date >= ? and time >= ? and time <= ?;"
+            sql_avg_minute ="select avg(PANEL_CURRENT) from parameters where date >= ? and time >= ? and time <= ?;"
             #print(t2,end=" ")
             #print(t1,end=" ")
             
@@ -57,12 +71,14 @@ def getPower():
             rows= db.fetchall()#average power
             #print(rows)
             #print(f"total records {rows[0]} time {t2}")
-            print(".", end="")
-            power_raw=[round(sl[0],2) for sl in rows]
-            
+            for sl in rows:
+                if(sl[0]!=None):
+                    power_raw=[round(sl[0],2)]
+                    #print(round(sl[0],2))
+                    power_list.append((date_find+" "+str(t2),power_raw[0]))
 
             
-            power_list.append((date_find+" "+str(t2),power_raw[0]))
+            
 
     print("done with list")
 
@@ -96,8 +112,8 @@ def sensorLive():
                 #newdate=power_list[0][:]
                 #newCurrent = power_list[1][:]
                 print(f"total records {len(newdate)-1}")
-                reset = 1
-                
+                #reset = 1
+            ''' 
             else:
                 cur.execute(sql_lastrow)
                 rows = cur.fetchall()
@@ -109,6 +125,7 @@ def sensorLive():
                 newdate = rows[0][1]+" "+rows[0][2]
                 #print(newdate)
                 #print(newCurrent)
+            '''
             json_data = json.dumps({'date': newdate, 'current': newCurrent, 'reset':reset}, default=str)
             yield f"data:{json_data}\n\n"
             

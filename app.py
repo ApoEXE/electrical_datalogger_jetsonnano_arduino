@@ -153,13 +153,10 @@ def gather_data():
         POWER = str(round(voltage_avg*current_avg,2))
 
         m_panel_current = str(panel_current_avg)
-        if(panel_voltage_avg>13):
-            m_panel_volt = str(panel_voltage_avg)
-            panel_power = panel_voltage_avg*100/18.2 #regla de tres para llegar a los watios
-            m_panel_power = str(panel_power)
-        else:
-            m_panel_volt = '0'
-            m_panel_power = '0'
+        m_panel_volt = str(panel_voltage_avg)
+        panel_power = panel_voltage_avg*100/18.2 #regla de tres para llegar a los watios
+        m_panel_power = str(panel_power)
+
 
         redifine_current = 0
         redifine_voltage =0
@@ -187,13 +184,13 @@ def gather_loop():
             print(f"panel solar: {m_panel_current }A")
             print(d1,end=" ")
             print(d2,end=" ")
-            print('Panel Voltage in ',end="")
+            print('AC Voltage in ',end="")
 
             print(var_volt_ac,end="")
 
             print(' V',end="")
 
-            print(' Panel Current in ',end="")
+            print(' AC Current in ',end="")
             print(var_current_ac,end="")
   
             print(' A  ')
