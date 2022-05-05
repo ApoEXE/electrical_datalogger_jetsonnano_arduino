@@ -1,0 +1,19 @@
+[Unit]
+After=network.service
+Description=DataLogger for AC current and Voltage
+
+[Service]
+Type=simple
+# WorkingDirectory=/code/python/myapp
+Restart=always
+RestartSec=1
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
+Restart=on-failure
+ExecStart=/home/nano/wifi_run.sh
+
+# User=do-user
+
+[Install]
+WantedBy=multi-user.target
+# WantedBy=default.target

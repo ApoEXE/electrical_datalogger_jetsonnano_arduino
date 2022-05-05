@@ -1,0 +1,13 @@
+[Unit]
+# After=network.service
+Description=My App
+
+[Service]
+Type=simple
+# WorkingDirectory=/code/python/myapp
+ExecStart=/usr/sbin/zerotier-one
+# User=do-user
+
+[Install]
+WantedBy=multi-user.target
+# WantedBy=default.target
