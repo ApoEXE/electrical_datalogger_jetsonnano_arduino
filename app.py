@@ -98,7 +98,6 @@ def gather_data():
         volt_in_panel = round(volt_in_panel,2)
         #--reading from panel current
         ac_curr_dig_panel = read[4]<<8 | read[5]  
-        ac_curr_dig_panel = ac_curr_dig_panel/1000
         ac_curr_dig_panel = round(ac_curr_dig_panel,2)
 
 
@@ -113,9 +112,10 @@ def gather_data():
             redifine_current += ac_curr
             redifine_voltage +=volt_ac
             samples +=1
-        redifine_panel_current += ac_curr_dig_panel
-        redifine_panel_voltage +=volt_in_panel
-        samples_panel +=1
+        if(volt_in_panel < 46 ):
+            redifine_panel_current += (ac_curr_dig_panel/1000.0)
+            redifine_panel_voltage +=volt_in_panel
+            samples_panel +=1
         
     except Exception as e:
         print(f"ERROR gather 0x20 i2c disconnection")
@@ -152,10 +152,10 @@ def gather_data():
         d2 = time_hr
         POWER = str(round(voltage_avg*current_avg,2))
 
-        m_panel_current = str(panel_current_avg)
-        m_panel_volt = str(panel_voltage_avg)
+        m_panel_current = str(round(panel_current_avg,2))
+        m_panel_volt = str(round(panel_voltage_avg,2))
         panel_power = panel_voltage_avg*100/18.2 #regla de tres para llegar a los watios
-        m_panel_power = str(panel_power)
+        m_panel_power = str(round(panel_power,2))
 
 
         redifine_current = 0
@@ -179,9 +179,9 @@ def gather_loop():
             conn.commit()
             print(d1,end=" ")
             print(d2,end=" ")
-            print(f"panel solar: {m_panel_volt }V",end=" ")
-            print(f"panel solar: {m_panel_power }W",end=" ")
-            print(f"panel solar: {m_panel_current }A")
+            print(f"panel Volt: {m_panel_volt }V",end=" ")
+            print(f"panel Watts: {m_panel_power }W",end=" ")
+            print(f"panel Amp: {m_panel_current }A")
             print(d1,end=" ")
             print(d2,end=" ")
             print('AC Voltage in ',end="")
@@ -193,7 +193,11 @@ def gather_loop():
             print(' AC Current in ',end="")
             print(var_current_ac,end="")
   
-            print(' A  ')
+            print(' A  ', end='')
+            print(' AC POWER ',end="")
+            print(POWER,end="")
+  
+            print(' W ')
 
             time.sleep(0.2)
     conn.close()
@@ -217,7 +221,8 @@ def socket_loop():
                 if(d1!=""):
                     old_time = d2
                     print("R<", end=" ")
-                    rcvdData = c.recv(4096)
+                    rcvdData = c.recv(100)
+                    #       0   1    2              3          4        5              6              7
                     list = [d1,d2,var_volt_ac,var_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power]
                     print("S>", end=" ")
                     str_sendData = str(list)
