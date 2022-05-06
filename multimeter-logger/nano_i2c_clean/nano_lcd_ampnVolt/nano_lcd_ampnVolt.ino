@@ -45,7 +45,7 @@ void setup() {
 
   Serial.println(__FILE__);
   digitalWrite(led, led_state);
-  digitalWrite(rele, HIGH);
+  digitalWrite(rele, LOW);//disabled
 }
 
 void loop() {
@@ -108,11 +108,11 @@ void loop() {
   //Serial.println(panel_volt_ac);
   //Serial.print(" ");
 
-  if(panel_volt_ac < 12.0){
-      digitalWrite(rele,HIGH);
-    }
-    else
-      digitalWrite(rele, LOW);
+  //if(panel_volt_ac < 12.0){
+  //    digitalWrite(rele,HIGH);
+   // }
+   // else
+   //   digitalWrite(rele, LOW);
  
 }
 
