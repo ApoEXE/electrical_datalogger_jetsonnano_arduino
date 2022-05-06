@@ -27,6 +27,7 @@ unsigned int sample = 1;//number of samples to take before sending to lcd
 volatile bool flag1 = false; //send on received command from jetson
 
 const int led = 13;
+const int rele = 12;
 int flag2  = 1;
 int led_state = LOW;
 
@@ -34,7 +35,7 @@ void setup() {
   // set up the LCD's number of columns and rows:
   Serial.begin(9600);
   pinMode(led, OUTPUT);
-  pinMode(A6, OUTPUT);
+  pinMode(rele, OUTPUT);
   ACS.autoMidPoint();
   ACS_2.autoMidPoint();
 
@@ -44,21 +45,13 @@ void setup() {
 
   Serial.println(__FILE__);
   digitalWrite(led, led_state);
-  digitalWrite(A6, HIGH);
+  digitalWrite(rele, HIGH);
 }
 
 void loop() {
 
 
-  if (flag1 == true)
-  {
-    //Serial.println("flag 1");
-    flag1 = false;
-
-  }
-
-
-  digitalWrite(led, led_state);
+  
   
   int dig_mA = 0;
   int dig_mA_2 = 0;
@@ -116,10 +109,10 @@ void loop() {
   //Serial.print(" ");
 
   if(panel_volt_ac < 12.0){
-      digitalWrite(A6, LOW);
+      digitalWrite(rele,HIGH);
     }
     else
-      digitalWrite(A6, HIGH);
+      digitalWrite(rele, LOW);
  
 }
 
@@ -152,7 +145,13 @@ void receiveEvent(int hoeMny)
 
 void sendEvent()
 {
-  Serial.println("entre en sendEvent");
+  //Serial.println("entre en sendEvent");
+    if(led_state == 1){
+  led_state = 0;
+  }
+  else
+  led_state = 1;
+  digitalWrite(led, led_state );
   Wire.write(ac_curr_dig>>8&0xff);//byte 1
   Wire.write(ac_curr_dig);//byte 2
   Wire.write(ac_volt_dig>>8&0xff);//byte 3

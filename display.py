@@ -110,7 +110,7 @@ def stop(sig, frame):
 signal.signal(signal.SIGINT, stop)
 
 def display_oled():
-    global display_i2c,var_date,var_time,var_current_ac,var_volt_ac, serverup,var_panel_volt,var_panel_curr,var_panel_power,var_power_ac
+    global displayup,display_i2c,var_date,var_time,var_current_ac,var_volt_ac, serverup,var_panel_volt,var_panel_curr,var_panel_power,var_power_ac
     # 128x32 display with hardware I2C:
     while display_i2c:
         disp = Adafruit_SSD1306.SSD1306_128_64(rst=None, i2c_bus=0, gpio=1) # setting gpio to 1 is hack to avoid platform detection

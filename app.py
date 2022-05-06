@@ -22,6 +22,10 @@ import sqlite3
 import socket
 
 
+from signal import signal, SIGPIPE, SIG_DFL  
+signal(SIGPIPE,SIG_DFL)
+
+
 is_shutdown = False
 serverup =True
 connected =True
@@ -214,15 +218,22 @@ def gather_loop():
 
 def socket_loop():
     global var_volt_ac,var_current_ac,d1,d2,POWER,m_panel_volt,m_panel_current,m_panel_power,serverup,connected
-    while not serverup:
+    while True:
         s = socket.socket()
         port = 12345
-        s.bind(('127.0.0.1', port))
-        s.listen(1)
-        c, addr = s.accept()
-        old_time = ""
-        print (f"Socket Up and running with a connection from {addr}")
-        while connected:
+        try:    
+            s.bind(('127.0.0.1', port))
+            s.listen(1)
+            c, addr = s.accept()
+            print (f"Socket Up and running with a connection from {addr}")
+            connected = False
+        except Exception as e:
+            print("error binding")
+            print(e)
+            connected = False
+            time.sleep(1)
+            
+        while True:
 
                 #if(rcvdData!=''):
                     #print(f"S: {rcvdData.decode('utf-8')}")
@@ -241,7 +252,9 @@ def socket_loop():
                     except Exception as e:
                         print("Broken pipe error on display.py")
                         print(e)
-                        connected = False
+                        time.sleep(1)
+                        #connected = False
+
         s.close()
         time.sleep(1)
     
@@ -254,19 +267,21 @@ socket_thread = Thread(target=socket_loop)
 #signal handling service
 
 def stop(sig, frame):
-
+    global is_shutdown,serverup,connected
     named_tuple = time.localtime() # get struct_time
     time_str=time.strftime("%Y-%m-%d %H:%M:%S", named_tuple)
     print(f"SIGTERM at {time_str}")
-    global is_shutdown
+    
     is_shutdown = True
+    serverup=False
+    connected=False
     conn.close()
     gather_thread.join()
     
     #socket_thread.join()
     exit(1)
 
-signal.signal(signal.SIGINT, stop)
+#signal(signal., stop)
 
 
 
