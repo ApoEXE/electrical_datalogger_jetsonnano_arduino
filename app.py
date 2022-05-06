@@ -137,35 +137,41 @@ def gather_data():
     m_panel_power = 0.0
     end = time.time()
     POWER = 0.0
-    if(end-start >=1 and samples!=0):
+    if(end-start >=1) :
         start = end
+        if(samples !=0):
+            current_avg = round(redifine_current/samples,2)
+            voltage_avg = round(redifine_voltage/samples,2)
+        else:
+            current_avg = 0
+            voltage_avg = 0
+        if(samples_panel !=0):
+            panel_current_avg = redifine_panel_current/samples_panel
+            panel_voltage_avg = redifine_panel_voltage/samples_panel
+        else:
+            panel_current_avg = 0
+            panel_voltage_avg = 0
+        if(samples != 0 or samples_panel !=0):
+            m_volt_ac = str(voltage_avg)
+            m_current_ac = str(current_avg)  
+            named_tuple = time.localtime() # get struct_time
+            date_str,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
+            d1 = date_str
+            d2 = time_hr
+            POWER = str(round(voltage_avg*current_avg,2))
 
-        current_avg = round(redifine_current/samples,2)
-        voltage_avg = round(redifine_voltage/samples,2)
-        panel_current_avg = redifine_panel_current/samples_panel
-        panel_voltage_avg = redifine_panel_voltage/samples_panel
-
-        m_volt_ac = str(voltage_avg)
-        
-        m_current_ac = str(current_avg)  
-        named_tuple = time.localtime() # get struct_time
-        date_str,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
-        d1 = date_str
-        d2 = time_hr
-        POWER = str(round(voltage_avg*current_avg,2))
-
-        m_panel_current = str(round(panel_current_avg,2))
-        m_panel_volt = str(round(panel_voltage_avg,2))
-        panel_power = panel_voltage_avg*100/18.2 #regla de tres para llegar a los watios
-        m_panel_power = str(round(panel_power,2))
+            m_panel_current = str(round(panel_current_avg,2))
+            m_panel_volt = str(round(panel_voltage_avg,2))
+            panel_power = panel_voltage_avg*100/18.2 #regla de tres para llegar a los watios
+            m_panel_power = str(round(panel_power,2))
 
 
-        redifine_current = 0
-        redifine_voltage =0
-        samples =0
-        redifine_panel_voltage = 0
-        redifine_panel_current = 0
-        samples_panel = 0
+            redifine_current = 0
+            redifine_voltage =0
+            samples =0
+            redifine_panel_voltage = 0
+            redifine_panel_current = 0
+            samples_panel = 0
 
     return [d1,d2,m_volt_ac,m_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power]
 
