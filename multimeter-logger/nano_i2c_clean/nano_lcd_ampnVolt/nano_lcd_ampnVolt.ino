@@ -3,7 +3,10 @@
 // ACS712 5A  uses 185 mV per A
 // ACS712 20A uses 100 mV per A
 // ACS712 30A uses  66 mV per A
-
+//A0 AC curr
+//A1 AC VOLT
+//A2 DC curr
+//A3 DC VOLT
 // include the library code:
 
 #include "ACS712.h"
@@ -11,7 +14,7 @@
 #include<Wire.h>
 
 ACS712  ACS(A0, 5.0, 1023, 66);
-
+ACS712  ACS_2(A2, 5.0, 1023, 66);
 
 //digital read
 int ac_curr_dig = 0;//save the digital conversion of current
@@ -33,13 +36,14 @@ void setup() {
   pinMode(led, OUTPUT);
   pinMode(A6, OUTPUT);
   ACS.autoMidPoint();
+  ACS_2.autoMidPoint();
 
   //ACS.setNoisemV(70);
   Wire.begin(0x20);
   Wire.onReceive(receiveEvent);
   Wire.onRequest(sendEvent);
 
-  Serial.print("sin miedo al exito");
+  Serial.println(__FILE__);
   digitalWrite(led, led_state);
 }
 
@@ -57,7 +61,7 @@ void loop() {
   double dig_mA_2 = 0;
   for(int i = 0; i< sample; i++)
       dig_mA += ACS.mA_AC(60);
-      dig_mA_2 += analogRead(A2);
+      dig_mA_2 += ACS_2.mA_DC();
   int mA = (dig_mA/sample);
   int mA_2 = (dig_mA_2/sample);
   ac_curr_dig = mA;
