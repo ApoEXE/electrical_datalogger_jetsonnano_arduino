@@ -52,7 +52,7 @@ void loop() {
 
   if (flag1 == true)
   {
-    Serial.println("flag 1");
+    //Serial.println("flag 1");
     flag1 = false;
 
   }
@@ -79,15 +79,15 @@ void loop() {
   ac_curr_dig_2 = mA_2;
   float ac_curr =(ac_curr_dig/1000);
 
-  Serial.print("AC_amp ");
-  Serial.print(ac_curr);
-  Serial.print(" ");
+  //Serial.print("AC_amp ");
+  //Serial.print(ac_curr);
+  //Serial.print(" ");
 
   float ac_curr_panel =(ac_curr_dig_2/1000);
 
-  Serial.print("panel_amp ");
-  Serial.print(ac_curr_panel);
-  Serial.println("");
+  //Serial.print("panel_amp ");
+  //Serial.print(ac_curr_panel);
+  //Serial.println("");
   
   int dig_volt = 0;
   int dig_volt_2 = 0;
@@ -104,16 +104,16 @@ void loop() {
   float volt_div = (anaVolt+0.5) * (4.9/1024.0);
   float volt_in = volt_div*(1000+880000)/1000;
   float volt_ac = (volt_in/sqrt(2));
-  Serial.print("AC_volt ");
-  Serial.println(volt_ac);
-  Serial.print(" ");
+  //Serial.print("AC_volt ");
+  //Serial.println(volt_ac);
+  //Serial.print(" ");
 
   float panel_volt_div = (anaVolt_2+0.5) * (4.9/1024.0);
   float panel_volt_in = panel_volt_div*(28200+10000)/10000;
   float panel_volt_ac = (panel_volt_in/sqrt(2));
-  Serial.print("Panel_volt ");
-  Serial.println(panel_volt_ac);
-  Serial.print(" ");
+  //Serial.print("Panel_volt ");
+  //Serial.println(panel_volt_ac);
+  //Serial.print(" ");
 
   if(panel_volt_ac < 12.0){
       digitalWrite(A6, LOW);
