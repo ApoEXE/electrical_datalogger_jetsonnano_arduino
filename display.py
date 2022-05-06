@@ -34,6 +34,7 @@ var_power_ac = ""
 serverup =  True
 reconnection =  True
 displayup =  True
+display_i2c = True
 
 
 
@@ -51,6 +52,7 @@ def socket_loop():
         except Exception as e:
             print("Connection refused")
             print(e)
+            serverup = False
         while serverup ==True:
             
             try:
@@ -90,6 +92,7 @@ def socket_loop():
             
             #line = data.split(",")
         print("Exit socket_loop")
+        time.sleep(1)
     print("Exit socket_reconnection")
 
 
@@ -107,93 +110,96 @@ def stop(sig, frame):
 signal.signal(signal.SIGINT, stop)
 
 def display_oled():
-    global var_date,var_time,var_current_ac,var_volt_ac, serverup,var_panel_volt,var_panel_curr,var_panel_power,var_power_ac
+    global display_i2c,var_date,var_time,var_current_ac,var_volt_ac, serverup,var_panel_volt,var_panel_curr,var_panel_power,var_power_ac
     # 128x32 display with hardware I2C:
-    disp = Adafruit_SSD1306.SSD1306_128_64(rst=None, i2c_bus=0, gpio=1) # setting gpio to 1 is hack to avoid platform detection
-    time.sleep(0.2)  # Wait for device to actually settle down
-    # Initialize library.
-    disp.begin()
+    while display_i2c:
+        disp = Adafruit_SSD1306.SSD1306_128_64(rst=None, i2c_bus=0, gpio=1) # setting gpio to 1 is hack to avoid platform detection
+        time.sleep(0.2)  # Wait for device to actually settle down
+        # Initialize library.
+        disp.begin()
 
-    # Clear display.
-    disp.clear()
-    disp.display()
+        # Clear display.
+        disp.clear()
+        disp.display()
 
-    # Create blank image for drawing.
-    # Make sure to create image with mode '1' for 1-bit color.
-    width = disp.width
-    height = disp.height
-    image = Image.new('1', (width, height))
+        # Create blank image for drawing.
+        # Make sure to create image with mode '1' for 1-bit color.
+        width = disp.width
+        height = disp.height
+        image = Image.new('1', (width, height))
 
-    # Get drawing object to draw on image.
-    draw = ImageDraw.Draw(image)
+        # Get drawing object to draw on image.
+        draw = ImageDraw.Draw(image)
 
-    # Draw a black filled box to clear the image.
-    draw.rectangle((0,0,width,height), outline=0, fill=0)
-
-    # Draw some shapes.
-    # First define some constants to allow easy resizing of shapes.
-    padding = -2
-    top = padding
-    bottom = height-padding
-    # Move left to right keeping track of the current x position for drawing shapes.
-    x = 0
-
-    # Load default font.
-    font = ImageFont.load_default()
-
-    print("ready to display")
-
-    start = time.time()
-    while displayup == True:
-        
-        
-                # Draw a black filled box to clear the image.
+        # Draw a black filled box to clear the image.
         draw.rectangle((0,0,width,height), outline=0, fill=0)
 
-                # Shell scripts for system monitoring from here : https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load
-        cmd = "ifconfig wlan0 | grep 'inet ' | cut -c 14-26"
-        IP = subprocess.check_output(cmd, shell = True )
-        cmd = "top -bn1 | grep load | awk '{printf \"CPU Load: %.2f\", $(NF-2)}'"
-        CPU = subprocess.check_output(cmd, shell = True )
-        cmd = "free -m | awk 'NR==2{printf \"Mem: %s/%sMB %.2f%%\", $3,$2,$3*100/$2 }'"
-        MemUsage = subprocess.check_output(cmd, shell = True )
-        cmd = "free -m | awk 'NR==3{printf \"Swap: %s/%sMB %.2f%%\", $3,$2,$3*100/$2 }'"
-        SwapUsage = subprocess.check_output(cmd, shell = True )
-        cmd = "df -h | awk '$NF==\"/\"{printf \"Disk: %d/%dGB %s\", $3,$2,$5}'"
-        Disk = subprocess.check_output(cmd, shell = True )
-        cmd = "date"
-        Date = subprocess.check_output(cmd, shell = True )
+        # Draw some shapes.
+        # First define some constants to allow easy resizing of shapes.
+        padding = -2
+        top = padding
+        bottom = height-padding
+        # Move left to right keeping track of the current x position for drawing shapes.
+        x = 0
 
-                # Write two lines of text.
-                
-                
-                
+        # Load default font.
+        font = ImageFont.load_default()
 
-                
-                
-        draw.text((x, top), "DATE: " + var_date      ,  font=font, fill=255)
-        draw.text((x, top+8), "TIME: " + var_time  ,  font=font, fill=255)
-        draw.text((x, top+16), "POWER: " +  var_power_ac + " W"  ,  font=font, fill=255)
-        draw.text((x, top+24), "AMP: " +  var_current_ac + " A" ,  font=font, fill=255)
-        draw.text((x, top+32), "PV (V): " +var_panel_volt ,  font=font, fill=255)
-        named_tuple = time.localtime() # get struct_time
-        date,time_str=time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
-        draw.text((x, top+40), "PV (A): " +  var_panel_curr  , font=font, fill=255)
-        draw.text((x, top+48), date+"."+time_str  ,  font=font, fill=255)
-        # Display image.
-        disp.image(image)
-        end = time.time()
-        if(end-start >1):
-            print("time elapsed")
-            start = end
-            try:
-                time.sleep(0.2)  # Wait for device to actually settle down
-                disp.display()
-                time.sleep(0.2)  # Wait for device to actually settle down
-            except Exception as e:
-                print(f"ERROR display 0x3C i2c disconnection")
-                print(e)
-    print("Exit display_loop")
+        print("ready to display")
+
+        start = time.time()
+        while displayup == True:
+            
+            
+                    # Draw a black filled box to clear the image.
+            draw.rectangle((0,0,width,height), outline=0, fill=0)
+
+                    # Shell scripts for system monitoring from here : https://unix.stackexchange.com/questions/119126/command-to-display-memory-usage-disk-usage-and-cpu-load
+            cmd = "ifconfig wlan0 | grep 'inet ' | cut -c 14-26"
+            IP = subprocess.check_output(cmd, shell = True )
+            cmd = "top -bn1 | grep load | awk '{printf \"CPU Load: %.2f\", $(NF-2)}'"
+            CPU = subprocess.check_output(cmd, shell = True )
+            cmd = "free -m | awk 'NR==2{printf \"Mem: %s/%sMB %.2f%%\", $3,$2,$3*100/$2 }'"
+            MemUsage = subprocess.check_output(cmd, shell = True )
+            cmd = "free -m | awk 'NR==3{printf \"Swap: %s/%sMB %.2f%%\", $3,$2,$3*100/$2 }'"
+            SwapUsage = subprocess.check_output(cmd, shell = True )
+            cmd = "df -h | awk '$NF==\"/\"{printf \"Disk: %d/%dGB %s\", $3,$2,$5}'"
+            Disk = subprocess.check_output(cmd, shell = True )
+            cmd = "date"
+            Date = subprocess.check_output(cmd, shell = True )
+
+                    # Write two lines of text.
+                    
+                    
+                    
+
+                    
+                    
+            draw.text((x, top), "DATE: " + var_date      ,  font=font, fill=255)
+            draw.text((x, top+8), "TIME: " + var_time  ,  font=font, fill=255)
+            draw.text((x, top+16), "POWER: " +  var_power_ac + " W"  ,  font=font, fill=255)
+            draw.text((x, top+24), "AMP: " +  var_current_ac + " A" ,  font=font, fill=255)
+            draw.text((x, top+32), "PV (V): " +var_panel_volt ,  font=font, fill=255)
+            named_tuple = time.localtime() # get struct_time
+            date,time_str=time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
+            draw.text((x, top+40), "PV (A): " +  var_panel_curr  , font=font, fill=255)
+            draw.text((x, top+48), date+"."+time_str  ,  font=font, fill=255)
+            # Display image.
+            disp.image(image)
+            end = time.time()
+            if(end-start >1):
+                print("time elapsed")
+                start = end
+                try:
+                    time.sleep(0.2)  # Wait for device to actually settle down
+                    disp.display()
+                    time.sleep(0.2)  # Wait for device to actually settle down
+                except Exception as e:
+                    print(f"ERROR display 0x3C i2c disconnection")
+                    print(e)
+                    displayup = False
+        print("Exit display_loop")
+        time.sleep(1)
 #signal handling service
 
 

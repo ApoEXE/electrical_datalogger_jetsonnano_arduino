@@ -103,7 +103,7 @@ void loop() {
   
   float volt_div = (anaVolt+0.5) * (4.9/1024.0);
   float volt_in = volt_div*(1000+880000)/1000;
-  float volt_ac = (volt_in/sqrt(2)) + 21;
+  float volt_ac = (volt_in/sqrt(2));
   Serial.print("AC_volt ");
   Serial.println(volt_ac);
   Serial.print(" ");

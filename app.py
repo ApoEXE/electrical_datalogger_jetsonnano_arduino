@@ -9,7 +9,7 @@ from threading import Thread
 import time
 
 
-
+import math 
 
 
 from cv2 import sqrt
@@ -23,6 +23,8 @@ import socket
 
 
 is_shutdown = False
+serverup =True
+connected =True
 realvolt = 4.59
 # DECLARATIONS
 var_current_ac= ""
@@ -81,14 +83,14 @@ def gather_data():
         time.sleep(0.2)  # Wait for device to actually settle down
         read = bus.read_i2c_block_data(address,0,8)
         time.sleep(0.2)  # Wait for device to actually settle down
-        bus.write_byte_data(address, 0, 0x0B)
-        time.sleep(0.2)  # Wait for device to actually settle down
+        #bus.write_byte_data(address, 0, 0x0B)
+        #time.sleep(0.2)  # Wait for device to actually settle down
         #VOLTAGE-----------
         ac_volt_dig = read[2]<<8 | read[3]
         #print(ac_volt_dig)
         anaVolt = (ac_volt_dig+0.5)*(realvolt / 1024.0)
         volt_in = anaVolt*(1000+880000)/1000
-        volt_ac = (volt_in/1.4142135623730950488016887242097)+21
+        volt_ac = (volt_in/math.sqrt(2))
 
         
         #--reading from panel power
@@ -125,7 +127,7 @@ def gather_data():
 
         POWER = 0
         #seconds_delay = random.randint(0, 3)
-        #time.sleep(seconds_delay)
+        time.sleep(1)
     d1 = ""
     d2 = ""
     m_volt_ac = ""
@@ -205,8 +207,8 @@ def gather_loop():
     
 
 def socket_loop():
-    global var_volt_ac,var_current_ac,d1,d2,POWER,m_panel_volt,m_panel_current,m_panel_power
-    while not is_shutdown:
+    global var_volt_ac,var_current_ac,d1,d2,POWER,m_panel_volt,m_panel_current,m_panel_power,serverup,connected
+    while not serverup:
         s = socket.socket()
         port = 12345
         s.bind(('127.0.0.1', port))
@@ -214,7 +216,7 @@ def socket_loop():
         c, addr = s.accept()
         old_time = ""
         print (f"Socket Up and running with a connection from {addr}")
-        while not is_shutdown:
+        while connected:
 
                 #if(rcvdData!=''):
                     #print(f"S: {rcvdData.decode('utf-8')}")
@@ -229,12 +231,13 @@ def socket_loop():
                     #str_sendData = [d1,d2,var_volt_ac,var_current_ac,POWER]
                     try:
                         c.send(str_sendData.encode())
-                        #time.sleep(0.2)
+                        #
                     except Exception as e:
                         print("Broken pipe error on display.py")
                         print(e)
-                        break
+                        connected = False
         s.close()
+        time.sleep(1)
     
 
 
