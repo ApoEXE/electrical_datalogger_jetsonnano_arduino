@@ -114,7 +114,7 @@ def gather_data():
             redifine_current += ac_curr
             redifine_voltage +=volt_ac
             samples +=1
-        if(volt_in_panel < 46 ):
+        if(volt_in_panel < 46 and volt_in_panel >= 1):
             redifine_panel_current += (ac_curr_dig_panel/1000.0)
             redifine_panel_voltage +=volt_in_panel
             samples_panel +=1
