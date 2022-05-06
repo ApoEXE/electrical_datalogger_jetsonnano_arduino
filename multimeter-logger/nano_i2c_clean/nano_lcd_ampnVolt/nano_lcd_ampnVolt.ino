@@ -11,7 +11,7 @@
 #include<Wire.h>
 
 ACS712  ACS(A0, 5.0, 1023, 66);
-ACS712  ACS_2(A2, 5.0, 1023, 66);
+
 
 //digital read
 int ac_curr_dig = 0;//save the digital conversion of current
@@ -20,20 +20,20 @@ int ac_volt_dig = 0;//save the digital conversion of voltage
 int ac_curr_dig_2 = 0;//save the digital conversion of current
 int ac_volt_dig_2 = 0;//save the digital conversion of voltage
 
-unsigned int sample = 50;//number of samples to take before sending to lcd
+unsigned int sample = 1;//number of samples to take before sending to lcd
 volatile bool flag1 = false; //send on received command from jetson
-const int relay = 11;
+
 const int led = 13;
-volatile bool flag2  = false;
+int flag2  = 0;
 int led_state = LOW;
 
 void setup() {
   // set up the LCD's number of columns and rows:
   Serial.begin(9600);
   pinMode(led, OUTPUT);
-  pinMode(relay, OUTPUT);
+  pinMode(A6, OUTPUT);
   ACS.autoMidPoint();
-  ACS_2.autoMidPoint();
+
   //ACS.setNoisemV(70);
   Wire.begin(0x20);
   Wire.onReceive(receiveEvent);
@@ -57,7 +57,7 @@ void loop() {
   double dig_mA_2 = 0;
   for(int i = 0; i< sample; i++)
       dig_mA += ACS.mA_AC(60);
-      dig_mA_2 += ACS_2.mA_AC(60);
+      dig_mA_2 += analogRead(A2);
   int mA = (dig_mA/sample);
   int mA_2 = (dig_mA_2/sample);
   ac_curr_dig = mA;
@@ -97,8 +97,13 @@ void loop() {
 
 void receiveEvent(int hoeMny)
 {
-  led_state = !led_state;
-  digitalWrite(relay, led_state);
+  if(led_state == 1){
+  led_state = 0;
+  }
+  else
+  led_state = 1;
+  digitalWrite(led, led_state);
+
   byte cmd = Wire.read();  //read the received byte
   if (cmd == 0x0A)    //be sure that 0x0A is coming from MEGA
   {
@@ -107,14 +112,14 @@ void receiveEvent(int hoeMny)
   }
   if (cmd == 0x0B)    //relay toggle
   {
-    if(flag2==false){
-    flag2  = true;
-    digitalWrite(relay, HIGH);
+    if(flag2==1){
+    flag2  = 0;
+    
     }
     else{
-    flag2  = false;
-    digitalWrite(relay, LOW);
+    flag2  = 1;
     }
+    digitalWrite(A6, flag2);
     
   }
 }
