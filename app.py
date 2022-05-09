@@ -100,7 +100,9 @@ def gather_data():
         #--reading from panel power
         ac_volt_dig_panel = read[6]<<8 | read[7]
         anaVolt_panel = (ac_volt_dig_panel+0.5)*(realvolt / 1024.0)
-        volt_in_panel = anaVolt_panel*(28200+10000)/10000
+        R1 = 39300
+        R2 = 10000
+        volt_in_panel = anaVolt_panel*(R1+R2)/R2
         volt_in_panel = round(volt_in_panel,2)
         #--reading from panel current
         ac_curr_dig_panel = read[4]<<8 | read[5]  

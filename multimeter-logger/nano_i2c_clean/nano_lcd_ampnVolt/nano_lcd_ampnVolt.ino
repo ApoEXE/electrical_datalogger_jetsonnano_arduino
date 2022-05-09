@@ -15,6 +15,7 @@
 
 ACS712  ACS(A0, 5.0, 1023, 66);
 ACS712  ACS_2(A2, 5.0, 1023, 66);
+byte cmd
 
 //digital read
 int ac_curr_dig = 0;//save the digital conversion of current
@@ -62,7 +63,7 @@ void loop() {
       temp_1 = ACS.mA_AC(60);
       if(temp_1 > 70)
           dig_mA += temp_1;
-      temp_2 = ACS_2.mA_AC(60);
+      temp_2 = ACS_2.mA_DC();
       if(temp_2 > 70)
           dig_mA_2 += temp_2;
    
