@@ -11,28 +11,28 @@
 
 #include "ACS712.h"
 
-#include<Wire.h>
+#include <Wire.h>
 
-ACS712  ACS(A0, 5.0, 1023, 66);
-ACS712  ACS_2(A2, 5.0, 1023, 66);
-byte cmd
+ACS712 ACS(A0, 4.47, 1023, 66);
+ACS712 ACS_2(A2, 4.47, 1023, 66);
+byte cmd;
 
 //digital read
-int ac_curr_dig = 0;//save the digital conversion of current
-int ac_volt_dig = 0;//save the digital conversion of voltage
+int ac_curr_dig = 0; //save the digital conversion of current
+int ac_volt_dig = 0; //save the digital conversion of voltage
 
-int ac_curr_dig_2 = 0;//save the digital conversion of current
-int ac_volt_dig_2 = 0;//save the digital conversion of voltage
+int ac_curr_dig_2 = 0; //save the digital conversion of current
+int ac_volt_dig_2 = 0; //save the digital conversion of voltage
 
-unsigned int sample = 1;//number of samples to take before sending to lcd
-volatile bool flag1 = false; //send on received command from jetson
+unsigned int sample = 1;     //number of samples to take before sending to lcd
+
 
 const int led = 13;
 const int rele = 12;
-int flag2  = 1;
 int led_state = LOW;
 
-void setup() {
+void setup()
+{
   // set up the LCD's number of columns and rows:
   Serial.begin(9600);
   pinMode(led, OUTPUT);
@@ -46,119 +46,94 @@ void setup() {
 
   Serial.println(__FILE__);
   digitalWrite(led, led_state);
-  digitalWrite(rele, LOW);//disabled
+  digitalWrite(rele, LOW); //disabled
 }
 
-void loop() {
-
-
-  
-  
+void loop()
+{
+  //CURRENTS AC AND DC
   int dig_mA = 0;
   int dig_mA_2 = 0;
   int temp_1 = 0;
   int temp_2 = 0;
-  for(int i = 0; i< sample; i++)
-      
-      temp_1 = ACS.mA_AC(60);
-      if(temp_1 > 70)
-          dig_mA += temp_1;
-      temp_2 = ACS_2.mA_DC();
-      if(temp_2 > 70)
-          dig_mA_2 += temp_2;
-   
-  int mA = (dig_mA/sample);
-  int mA_2 = (dig_mA_2/sample);
-  ac_curr_dig = mA;
-  ac_curr_dig_2 = mA_2;
-  float ac_curr =(ac_curr_dig/1000);
+  for (int i = 0; i < sample; i++)
+  {
 
-  //Serial.print("AC_amp ");
-  //Serial.print(ac_curr);
-  //Serial.print(" ");
+    dig_mA += ACS.mA_AC(60);
 
-  float ac_curr_panel =(ac_curr_dig_2/1000);
+    dig_mA_2 += ACS_2.mA_DC(); //currenct DC
+  }
 
-  //Serial.print("panel_amp ");
-  //Serial.print(ac_curr_panel);
-  //Serial.println("");
-  
+  ac_curr_dig = (dig_mA / sample);
+  ac_curr_dig_2 = (dig_mA_2 / sample);
+
+
+  //testing Dc current other way
+  /*
+  float voltage_dc_panel =(analogRead(A2)+0.5) * (4.47 / 1024.0);
+  Serial.print("voltage ACS panel");
+  Serial.println(voltage_dc_panel);
+  float dc_v_acs=((voltage_dc_panel)-2.22  )/0.066;
+  Serial.print("Current ACS Panel");
+  Serial.println(dc_v_acs);
+*/
+  //
+
+  //VOLTAGES AC AND DC
   int dig_volt = 0;
   int dig_volt_2 = 0;
-  for(int i = 0; i< sample; i++){
-      dig_volt += analogRead(A1);
-      dig_volt_2 += analogRead(A3);
+  for (int i = 0; i < sample; i++)
+  {
+    dig_volt += analogRead(A1);
+    dig_volt_2 += analogRead(A3);
   }
-  int anaVolt = (dig_volt/sample);
-  ac_volt_dig = anaVolt;
-  int anaVolt_2 = (dig_volt_2/sample);
-  ac_volt_dig_2 = anaVolt_2;
+  ac_volt_dig = (dig_volt / sample);
+  ac_volt_dig_2 = (dig_volt_2 / sample);
 
-  
-  float volt_div = (anaVolt+0.5) * (4.9/1024.0);
-  float volt_in = volt_div*(1000+880000)/1000;
-  float volt_ac = (volt_in/sqrt(2));
-  //Serial.print("AC_volt ");
-  //Serial.println(volt_ac);
-  //Serial.print(" ");
-
-  float panel_volt_div = (anaVolt_2+0.5) * (4.9/1024.0);
-  float panel_volt_in = panel_volt_div*(28200+10000)/10000;
-  float panel_volt_ac = (panel_volt_in/sqrt(2));
-  //Serial.print("Panel_volt ");
-  //Serial.println(panel_volt_ac);
-  //Serial.print(" ");
-
-  //if(panel_volt_ac < 12.0){
-  //    digitalWrite(rele,HIGH);
-   // }
-   // else
-   //   digitalWrite(rele, LOW);
- 
+  cmd = Wire.read(); //read the received byte
+  switch (cmd)
+  {
+  case 0x0A:
+    Serial.print("received: ");
+    Serial.println(cmd, HEX);
+    break;
+  case 0x0B:
+    digitalWrite(rele, HIGH); //disabled
+    Serial.print("received: ");
+    Serial.println(cmd, HEX);
+    break;
+  case 0x0C:
+    digitalWrite(rele, LOW); //disabled
+    Serial.print("received: ");
+    Serial.println(cmd, HEX);
+    break;
+  default:
+    break;
+  }
+  cmd = 0;
 }
 
 void receiveEvent(int hoeMny)
 {
 
-  
-  byte cmd = Wire.read();  //read the received byte
-  if (cmd == 0x0A)    //be sure that 0x0A is coming from MEGA
-  {
-    flag1  = true;
-    
-  }
-  if (cmd == 0x0B)    //relay toggle
-  {
-    if(flag2==1){
-    flag2  = 0;
-    
-    }
-    else{
-    flag2  = 1;
-    }
-  }
-   if(led_state == 1){
-  led_state = 0;
-  }
-  else
-  led_state = 1;
+
 }
 
 void sendEvent()
 {
   //Serial.println("entre en sendEvent");
-    if(led_state == 1){
-  led_state = 0;
-  }
+  if (led_state == 1)
+    led_state = 0;
   else
-  led_state = 1;
-  digitalWrite(led, led_state );
-  Wire.write(ac_curr_dig>>8&0xff);//byte 1
-  Wire.write(ac_curr_dig);//byte 2
-  Wire.write(ac_volt_dig>>8&0xff);//byte 3
-  Wire.write(ac_volt_dig);//byte 4
-  Wire.write(ac_curr_dig_2>>8&0xff);//byte 5
-  Wire.write(ac_curr_dig_2);//byte 6
-  Wire.write(ac_volt_dig_2>>8&0xff);//byte 7
-  Wire.write(ac_volt_dig_2);//byte 8
+    led_state = 1;
+
+  digitalWrite(led, led_state);
+  Wire.write(ac_curr_dig >> 8 & 0xff);   //byte 1
+  Wire.write(ac_curr_dig);               //byte 2
+  Wire.write(ac_volt_dig >> 8 & 0xff);   //byte 3
+  Wire.write(ac_volt_dig);               //byte 4
+  Wire.write(ac_curr_dig_2 >> 8 & 0xff); //byte 5
+  Wire.write(ac_curr_dig_2);             //byte 6
+  Wire.write(ac_volt_dig_2 >> 8 & 0xff); //byte 7
+  Wire.write(ac_volt_dig_2);             //byte 8
 }

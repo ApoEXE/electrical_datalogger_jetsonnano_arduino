@@ -29,7 +29,7 @@ signal(SIGPIPE,SIG_DFL)
 is_shutdown = False
 serverup =True
 connected =True
-realvolt = 4.59
+realvolt = 4.47
 # DECLARATIONS
 var_current_ac= ""
 var_volt_ac = ""
@@ -52,6 +52,7 @@ time_str=time.strftime("%Y-%m-%d %H:%M:%S", named_tuple)
 m_panel_volt =""
 m_panel_current =""
 m_panel_power =""
+
 
 print(f"START at {time_str}")
 
@@ -87,6 +88,12 @@ def gather_data():
         time.sleep(0.2)  # Wait for device to actually settle down
         read = bus.read_i2c_block_data(address,0,8)
         time.sleep(0.2)  # Wait for device to actually settle down
+        named_tuple = time.localtime() # get struct_time
+        date_str,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
+        if(time_hr=='06:00:00'):
+            bus.write_byte_data(address, 0, 0x0C)#LOW  ENERGY IN
+        if(time_hr=='00:00:00'):
+            bus.write_byte_data(address, 0, 0x0B)#HIGH NOT ENERGY IBN
         #bus.write_byte_data(address, 0, 0x0B)
         #time.sleep(0.2)  # Wait for device to actually settle down
         #VOLTAGE-----------
@@ -94,8 +101,9 @@ def gather_data():
         #print(ac_volt_dig)
         anaVolt = (ac_volt_dig+0.5)*(realvolt / 1024.0)
         volt_in = anaVolt*(1000+880000)/1000
-        volt_ac = (volt_in/math.sqrt(2))
-
+        volt_ac = (volt_in/math.sqrt(2))+14
+        #current-----------
+        ac_curr = read[0]<<8 | read[1]
         
         #--reading from panel power
         ac_volt_dig_panel = read[6]<<8 | read[7]
@@ -111,16 +119,14 @@ def gather_data():
 
 
 
-        #current-----------
-        ac_curr = read[0]<<8 | read[1]
-        
-        ac_curr = ac_curr/1000.0
+
+
         
         if(volt_ac < 300 and volt_ac > 200):
-            redifine_current += ac_curr
+            redifine_current += ac_curr/1000.0
             redifine_voltage +=volt_ac
             samples +=1
-        if(volt_in_panel < 46 and volt_in_panel >= 1):
+        if(volt_in_panel < 46 and volt_in_panel >= 0.2):
             redifine_panel_current += (ac_curr_dig_panel/1000.0)
             redifine_panel_voltage +=volt_in_panel
             samples_panel +=1
@@ -157,7 +163,7 @@ def gather_data():
         else:
             panel_current_avg = 0
             panel_voltage_avg = 0
-        if(samples != 0 or samples_panel !=0):
+        if(samples != 0 and samples_panel !=0):
             m_volt_ac = str(voltage_avg)
             m_current_ac = str(current_avg)  
             named_tuple = time.localtime() # get struct_time
@@ -168,7 +174,7 @@ def gather_data():
 
             m_panel_current = str(round(panel_current_avg,2))
             m_panel_volt = str(round(panel_voltage_avg,2))
-            panel_power = panel_voltage_avg*100/18.2 #regla de tres para llegar a los watios
+            panel_power = panel_voltage_avg*100/22.5 #regla de tres para llegar a los watios
             m_panel_power = str(round(panel_power,2))
 
 
@@ -219,7 +225,7 @@ def gather_loop():
     
 
 def socket_loop():
-    global var_volt_ac,var_current_ac,d1,d2,POWER,m_panel_volt,m_panel_current,m_panel_power,serverup,connected
+    global c,s,var_volt_ac,var_current_ac,d1,d2,POWER,m_panel_volt,m_panel_current,m_panel_power,serverup,connected
     while True:
         s = socket.socket()
         port = 12345
@@ -228,14 +234,14 @@ def socket_loop():
             s.listen(1)
             c, addr = s.accept()
             print (f"Socket Up and running with a connection from {addr}")
-            connected = False
+            connected = True
         except Exception as e:
             print("error binding")
             print(e)
             connected = False
             time.sleep(1)
             
-        while True:
+        while connected:
 
                 #if(rcvdData!=''):
                     #print(f"S: {rcvdData.decode('utf-8')}")
