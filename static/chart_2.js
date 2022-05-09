@@ -5,7 +5,7 @@ $(document).ready(function () {
             data: {
                 labels: [],
                 datasets: [{
-                    label: "Power AC W",
+                    label: "Power Panel W",
                     backgroundColor: 'rgb(255, 99, 132)',
                     borderColor: 'rgb(255, 99, 132)',
                     data: [],
@@ -19,7 +19,7 @@ $(document).ready(function () {
                 },
                 title: {
                     display: true,
-                    text: 'Power (W) real time Plotting'
+                    text: 'Power Panel (W) real time Plotting'
                 },
                 tooltips: {
                     mode: 'index',
@@ -48,11 +48,11 @@ $(document).ready(function () {
             }
         };
 
-        const context = document.getElementById('canvas1').getContext('2d');
+        const context = document.getElementById('canvas2').getContext('2d');
 
         const lineChart = new Chart(context, config);
 
-        const source = new EventSource("/_sensor1");
+        const source = new EventSource("/_sensor2");
 
         reset_value = 0;
         source.onmessage = function (event) {
@@ -70,7 +70,7 @@ $(document).ready(function () {
             }
         
            */ 
-        console.log(data.reset);
+        console.log(data.reset2);
         console.log(data.date.length);
           if(reset_value==0){
             for (let index = 0; index < data.date.length; index++) {
