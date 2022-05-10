@@ -22,11 +22,11 @@ import sqlite3
 import socket
 
 
-from signal import signal, SIGPIPE, SIG_DFL  
-signal(SIGPIPE,SIG_DFL)
+#from signal import signal, SIGPIPE, SIG_DFL  
+#signal(SIGPIPE,SIG_DFL)
 
 
-is_shutdown = False
+shutdown = True
 serverup =True
 connected =True
 realvolt = 4.47
@@ -115,6 +115,7 @@ def gather_data():
         #--reading from panel current
         ac_curr_dig_panel = read[4]<<8 | read[5]  
         ac_curr_dig_panel = round(ac_curr_dig_panel,2)
+        print(ac_curr_dig_panel)
 
 
 
@@ -188,10 +189,10 @@ def gather_data():
     return [d1,d2,m_volt_ac,m_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power]
 
 def gather_loop():
-    global start,var_volt_ac,var_current_ac,POWER,d1,d2,m_panel_volt,m_panel_current,m_panel_power
+    global shutdown,start,var_volt_ac,var_current_ac,POWER,d1,d2,m_panel_volt,m_panel_current,m_panel_power
     print("Gathering DATA")
     start = time.time()
-    while not is_shutdown:
+    while shutdown:
         [d1,d2,var_volt_ac,var_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power] = gather_data()
         if(d1!=""):
             conn.execute("INSERT INTO parameters (DATE,TIME,VOLTAGE,CURRENT,POWER,PANEL_VOLTAGE,PANEL_CURRENT,PANEL_POWER) \
@@ -225,46 +226,45 @@ def gather_loop():
     
 
 def socket_loop():
-    global c,s,var_volt_ac,var_current_ac,d1,d2,POWER,m_panel_volt,m_panel_current,m_panel_power,serverup,connected
-    while True:
-        s = socket.socket()
-        port = 12345
-        try:    
-            s.bind(('127.0.0.1', port))
-            s.listen(1)
-            c, addr = s.accept()
-            print (f"Socket Up and running with a connection from {addr}")
-            connected = True
-        except Exception as e:
-            print("error binding")
-            print(e)
-            connected = False
+    global shutdown,c,s,var_volt_ac,var_current_ac,d1,d2,POWER,m_panel_volt,m_panel_current,m_panel_power,serverup,connected
+    while shutdown:
+        with socket.socket() as s:
+            port = 12345
+            try:    
+                s.bind(('127.0.0.1', port))
+                s.listen(1)
+                connected = True
+            except Exception as e:
+                print("error binding")
+                print(e)
+                connected = False
+                time.sleep(1)
+            while connected:
+                c, addr = s.accept()
+                print (f"Socket Up and running with a connection from {addr}")
+                            
+                                #old_time = d2
+                                #print("R<", end=" ")
+                                
+                                #rcvdData = c.recv(4096)
+                                #       0   1    2              3          4        5              6              7
+                list = [d1,d2,var_volt_ac,var_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power]
+                print("S>")
+                str_sendData = str(list)
+                        
+                try:
+                    c.sendall(str_sendData.encode('utf-8'))
+                except Exception as e:
+                    print("Broken pipe error on display.py")
+                    print(e)
+                    time.sleep(1)
+                    connected = False
+                    c.close()
+                    break
+                  
+
+
             time.sleep(1)
-            
-        while connected:
-
-                #if(rcvdData!=''):
-                    #print(f"S: {rcvdData.decode('utf-8')}")
-                if(d1!=""):
-                    old_time = d2
-                    print("R<", end=" ")
-                    rcvdData = c.recv(100)
-                    #       0   1    2              3          4        5              6              7
-                    list = [d1,d2,var_volt_ac,var_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power]
-                    print("S>", end=" ")
-                    str_sendData = str(list)
-                    #str_sendData = [d1,d2,var_volt_ac,var_current_ac,POWER]
-                    try:
-                        c.send(str_sendData.encode())
-                        #
-                    except Exception as e:
-                        print("Broken pipe error on display.py")
-                        print(e)
-                        time.sleep(1)
-                        #connected = False
-
-        s.close()
-        time.sleep(1)
     
 
 
@@ -275,12 +275,12 @@ socket_thread = Thread(target=socket_loop)
 #signal handling service
 
 def stop(sig, frame):
-    global is_shutdown,serverup,connected
+    global shutdown,serverup,connected
     named_tuple = time.localtime() # get struct_time
     time_str=time.strftime("%Y-%m-%d %H:%M:%S", named_tuple)
     print(f"SIGTERM at {time_str}")
     
-    is_shutdown = True
+    shutdown = False
     serverup=False
     connected=False
     conn.close()
@@ -289,7 +289,7 @@ def stop(sig, frame):
     #socket_thread.join()
     exit(1)
 
-#signal(signal., stop)
+signal.signal(signal.SIGINT, stop)
 
 
 
@@ -301,7 +301,7 @@ if __name__ == '__main__':
 
     
     
-    while not  is_shutdown:
+    while shutdown:
         time.sleep(1)
     named_tuple = time.localtime() # get struct_time
     time_str=time.strftime("%Y-%m-%d %H:%M:%S", named_tuple)

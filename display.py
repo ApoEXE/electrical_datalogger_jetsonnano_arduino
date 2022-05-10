@@ -37,62 +37,34 @@ displayup =  True
 display_i2c = True
 
 
-
+line_before = []
 def socket_loop():
-    global var_date,var_time,var_current_ac,var_volt_ac, serverup,reconnection,var_panel_volt,var_panel_curr,var_power_ac,var_panel_power
+    global line_before,var_date,var_time,var_current_ac,var_volt_ac,reconnection,var_panel_volt,var_panel_curr,var_power_ac,var_panel_power
     while reconnection:
-        s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        s.settimeout(1.0)
-        print("Connnecting...")
-        try:
-            
-            s.connect(("127.0.0.1",12345))
-            serverup=True
-            print("connected")
-        except Exception as e:
-            print("Connection refused")
-            print(e)
-            serverup = False
-        while serverup ==True:
-            
+        with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
             try:
-                time.sleep(1)
-                print("send to server")
-                send_to_server = "request from client"
-                s.send(send_to_server.encode())
-                #time.sleep(0.2)
-                #ready = select.select([s], [], [], 1)
-                #if ready[0]:
-                    #data = s.recv(4096)
-                print("receive")
-                data = s.recv(100)
+                s.connect(("127.0.0.1",12345))
+                data = s.recv(4096)
+                if not data:
+                        break
                 data = data.decode('utf-8')
-                #time.sleep(0.2)
-                #print(data)
                 line = eval(data)
                 if(line[0]!=""):
-                    var_date= line[0]
-                    var_time=line[1]
-                    var_current_ac = line[3]
-                    var_power_ac = line[4]
-                    var_volt_ac = line[2]
-                    var_panel_volt = line[5]
-                    var_panel_curr = line[6]
-                    var_panel_power = line[7]
-                    print(line)
+                        var_date= line[0]
+                        var_time=line[1]
+                        var_current_ac = line[3]
+                        var_power_ac = line[4]
+                        var_volt_ac = line[2]
+                        var_panel_volt = line[5]
+                        var_panel_curr = line[6]
+                        var_panel_power = line[7]
+                        if(line_before!=line):
+                            print(line)
+                            line_before = line
             except Exception as e:
-                print("Broken pipe on server side restarting")
+                print("Connection refused")
                 print(e)
-                #time.sleep(10)
-                serverup=False
-                #reconnection=False
-                s.close()
-        
-            
-            
-            #line = data.split(",")
-        print("Exit socket_loop")
-        time.sleep(1)
+                break
     print("Exit socket_reconnection")
 
 
