@@ -169,7 +169,7 @@ def sensorLive():
                 newCurrent = [power[1] for power in power_list_panel]
 
                 print(f"total records {len(newdate)-1}")
-            json_data = json.dumps({'date': newdate, 'current': newCurrent, 'reset2':reset2}, default=str)
+            json_data = json.dumps({'date_panel': newdate, 'var_panel': newCurrent, 'reset2':reset2}, default=str)
             yield f"data:{json_data}\n\n"
             
             time.sleep(1)
