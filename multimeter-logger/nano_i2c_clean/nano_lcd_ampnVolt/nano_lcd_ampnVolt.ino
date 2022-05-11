@@ -61,7 +61,7 @@ void loop()
 
     dig_mA += ACS.mA_AC(60);
 
-    dig_mA_2 += ACS_2.mA_DC(); //currenct DC
+    dig_mA_2 +=analogRead(A2); //currenct DC
   }
 
   ac_curr_dig = (dig_mA / sample);
@@ -69,14 +69,14 @@ void loop()
 
 
   //testing Dc current other way
-  /*
+  
   float voltage_dc_panel =(analogRead(A2)+0.5) * (4.47 / 1024.0);
   Serial.print("voltage ACS panel");
   Serial.println(voltage_dc_panel);
   float dc_v_acs=((voltage_dc_panel)-2.22  )/0.066;
   Serial.print("Current ACS Panel");
   Serial.println(dc_v_acs);
-*/
+
   //
 
   //VOLTAGES AC AND DC

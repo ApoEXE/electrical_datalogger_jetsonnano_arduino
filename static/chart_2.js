@@ -53,25 +53,15 @@ $(document).ready(function () {
         const lineChart = new Chart(context, config);
 
         const source = new EventSource("/_sensor2");
+        
+        const date_analisys_2 = "";
 
         reset_value_2 = 0;
         source.onmessage = function (event) {
             const data = JSON.parse(event.data);
-            
-/*
-            if(data.reset==1){
-                config.data.labels=[];
-                config.data.datasets[0].data=[];
-                console.log();
-            }
-            if (config.data.labels.length === 2000) {
-                config.data.labels.shift();
-                config.data.datasets[0].data.shift();
-            }
+
+
         
-           */ 
-        console.log(data.reset2);
-        console.log(data.date_panel.length);
           if(reset_value_2==0){
             for (let index = 0; index < data.date_panel.length; index++) {
                 

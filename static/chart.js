@@ -54,24 +54,12 @@ $(document).ready(function () {
 
         const source = new EventSource("/_sensor1");
 
+        const date_analisys = "";
+
         reset_value = 0;
         source.onmessage = function (event) {
             const data = JSON.parse(event.data);
             
-/*
-            if(data.reset==1){
-                config.data.labels=[];
-                config.data.datasets[0].data=[];
-                console.log();
-            }
-            if (config.data.labels.length === 2000) {
-                config.data.labels.shift();
-                config.data.datasets[0].data.shift();
-            }
-        
-           */ 
-        console.log(data.reset);
-        console.log(data.date.length);
           if(reset_value==0){
             for (let index = 0; index < data.date.length; index++) {
                 

@@ -49,14 +49,18 @@ yesterday = local_tz.localize(naive, is_dst=None) # but elapsed hours may differ
 date_yesterday,hour = str(yesterday).split(" ")
 print(date_yesterday)
 
+
+named_tuple = time.localtime() # get struct_time
+date_today,time_str=time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
+
 sql_lastrow = "SELECT * FROM parameters ORDER BY id DESC LIMIT 1;"
 sql_dayrecords =f" select * from parameters where date > '{date_yesterday}' and time > '00:00:00' and time < '00:59:00' and voltage > 200 ;"
 #sql_avg_minute ="select avg(power) from ac_parameters where date >= '2022/04/25' and time >= '?' and time <= '?' and voltage > 200;"
 
 def getPanelPower():
-    global db_backup,date_yesterday,power_list_panel,enable_server
+    global db_backup,date_yesterday,power_list_panel,enable_server,date_today
     power_list_panel = []
-    date_find =date_yesterday
+    date_find =date_today
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
@@ -84,9 +88,9 @@ def getPanelPower():
 
 
 def getPower():
-    global db_backup,power_list,date_yesterday,enable_server
+    global db_backup,power_list,date_yesterday,enable_server,date_today
     power_list = []
-    date_find =date_yesterday
+    date_find =date_today
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
@@ -128,7 +132,8 @@ def sensorPanel():
     
     def generate_random_data():
         with app.app_context(): 
-            global path,sql_dayrecords,cur,reset,power_list
+            global path,sql_dayrecords,cur,reset,power_list,date_today,date_yesterday
+            m_date = date_today
             newdate =[]
             newCurrent = []
             print("calling _sensor1")
@@ -147,7 +152,7 @@ def sensorPanel():
                 print(f"total records {len(newdate)-1}")
                 #reset = 1
 
-            json_data = json.dumps({'date': newdate, 'current': newCurrent, 'reset':reset}, default=str)
+            json_data = json.dumps({'date': newdate, 'current': newCurrent, 'reset':reset, 'date_analisys':m_date}, default=str)
             yield f"data:{json_data}\n\n"
             
             time.sleep(1)
@@ -160,6 +165,7 @@ def sensorLive():
     def generate_random_data():
         with app.app_context(): 
             global path,sql_dayrecords,cur,reset,power_list_panel,reset2
+            m_date = date_today
             newdate =[]
             newCurrent = []
             print("calling _sensor2")
@@ -169,7 +175,7 @@ def sensorLive():
                 newCurrent = [power[1] for power in power_list_panel]
 
                 print(f"total records {len(newdate)-1}")
-            json_data = json.dumps({'date_panel': newdate, 'var_panel': newCurrent, 'reset2':reset2}, default=str)
+            json_data = json.dumps({'date_panel': newdate, 'var_panel': newCurrent, 'reset2':reset2,'date_analisys_2':m_date}, default=str)
             yield f"data:{json_data}\n\n"
             
             time.sleep(1)

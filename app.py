@@ -114,21 +114,20 @@ def gather_data():
         volt_in_panel = round(volt_in_panel,2)
         #--reading from panel current
         ac_curr_dig_panel = read[4]<<8 | read[5]  
+        ac_curr_dig_panel = (ac_curr_dig_panel+0.5) * (4.47 / 1024.0)
+        #print(f"voltage {ac_curr_dig_panel} current ", end="")
+        ac_curr_dig_panel = ((ac_curr_dig_panel)-2.22  )/0.066
         ac_curr_dig_panel = round(ac_curr_dig_panel,2)
-        print(ac_curr_dig_panel)
-
-
-
-
-
+        #print(ac_curr_dig_panel)
 
         
         if(volt_ac < 300 and volt_ac > 200):
             redifine_current += ac_curr/1000.0
             redifine_voltage +=volt_ac
             samples +=1
-        if(volt_in_panel < 46 and volt_in_panel >= 0.2):
-            redifine_panel_current += (ac_curr_dig_panel/1000.0)
+        #print(f"volt_panel {volt_in_panel} cur_panel {ac_curr_dig_panel}")
+        if(volt_in_panel < 46 ):
+            redifine_panel_current += (ac_curr_dig_panel)
             redifine_panel_voltage +=volt_in_panel
             samples_panel +=1
         
@@ -151,6 +150,7 @@ def gather_data():
     end = time.time()
     POWER = 0.0
     if(end-start >=1) :
+        #print(f"second {samples} samples_panel {samples_panel}")
         start = end
         if(samples !=0):
             current_avg = round(redifine_current/samples,2)
@@ -185,7 +185,7 @@ def gather_data():
             redifine_panel_voltage = 0
             redifine_panel_current = 0
             samples_panel = 0
-
+        
     return [d1,d2,m_volt_ac,m_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power]
 
 def gather_loop():

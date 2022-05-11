@@ -42,6 +42,7 @@ def socket_loop():
     global line_before,var_date,var_time,var_current_ac,var_volt_ac,reconnection,var_panel_volt,var_panel_curr,var_power_ac,var_panel_power
     while reconnection:
         with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
+           
             try:
                 s.connect(("127.0.0.1",12345))
                 data = s.recv(4096)
@@ -49,6 +50,7 @@ def socket_loop():
                         break
                 data = data.decode('utf-8')
                 line = eval(data)
+                print(line)
                 if(line[0]!=""):
                         var_date= line[0]
                         var_time=line[1]
