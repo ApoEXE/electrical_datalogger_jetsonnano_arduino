@@ -1,13 +1,51 @@
 {% extends "layout.html" %}
 {% block content1 %}
+<h1>PV Voltage {{date_t}}</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <canvas id="canvas3"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src='/static/chart_3.js'>
+</script>
+
 
 {% endblock content1 %}
-{% block content2 %}
 
+
+{% block content2 %}
+<h1>PV CURRENT {{date_t}}</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <canvas id="canvas4"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src='/static/chart_4.js'>
+</script>
 {% endblock content2 %}
 
+
+
 {% block content3 %}
-<h1>PANEL SOURCE</h1>
+<h1>PANEL SOURCE {{date_t}}</h1>
 
 <div class="container">
     <div class="row">
@@ -26,23 +64,26 @@
 
 {% endblock content3 %}
 
+
+
+
 {% block content4 %}
 
-<h1>AC CONSUMPTION</h1>
+<h1>AC CONSUMPTION {{date_t}}</h1>
 
-    <div class="container">
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <canvas id="canvas1"></canvas>
-                    </div>
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <canvas id="canvas1"></canvas>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
 
-    <script src='/static/chart.js'>
-    </script>
-    {% endblock content4 %}
+<script src='/static/chart.js'>
+</script>
+{% endblock content4 %}

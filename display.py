@@ -50,7 +50,6 @@ def socket_loop():
                         break
                 data = data.decode('utf-8')
                 line = eval(data)
-                print(line)
                 if(line[0]!=""):
                         var_date= line[0]
                         var_time=line[1]
