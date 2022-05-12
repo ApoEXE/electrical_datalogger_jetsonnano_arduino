@@ -28,7 +28,7 @@ current_list_panel=[]
 reset = 0
 reset2 = 0
 old_date = ""
-
+date_to_find = "2022-05-10"
 db_backup = "ac_telemetry_backup.db"
 cmd = "cp -a ac_telemetry.db ac_telemetry_backup.db"
 returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
@@ -60,9 +60,9 @@ sql_dayrecords =f" select * from parameters where date > '{date_yesterday}' and 
 #sql_avg_minute ="select avg(power) from ac_parameters where date >= '2022/04/25' and time >= '?' and time <= '?' and voltage > 200;"
 
 def getPanelPower():
-    global db_backup,date_yesterday,power_list_panel,enable_server,date_today
+    global db_backup,power_list_panel,enable_server,date_to_find
     power_list_panel = []
-    date_find =date_today
+    date_find =date_to_find
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
@@ -86,9 +86,9 @@ def getPanelPower():
     return power_list_panel
 
 def getPanel_voltage():
-    global db_backup,date_yesterday,voltage_list_panel,enable_server,date_today
+    global db_backup,voltage_list_panel,enable_server,date_to_find
     voltage_list_panel = []
-    date_find =date_today
+    date_find =date_to_find
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
@@ -113,9 +113,9 @@ def getPanel_voltage():
 
 
 def getPanel_current():
-    global db_backup,date_yesterday,current_list_panel,enable_server,date_today
+    global db_backup,current_list_panel,enable_server,date_to_find
     current_list_panel = []
-    date_find =date_today
+    date_find =date_to_find
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
@@ -139,9 +139,9 @@ def getPanel_current():
 
 #************************************** AC Power
 def getPower():
-    global db_backup,power_list,date_yesterday,enable_server,date_today
+    global db_backup,power_list,enable_server,date_to_find
     power_list = []
-    date_find =date_today
+    date_find =date_to_find
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
@@ -152,12 +152,15 @@ def getPower():
             t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
             sql_avg_minute ="select avg(power) from parameters where date >= ? and time >= ? and time <= ? and voltage > 200;"           
             db.execute(sql_avg_minute,(date_find,str(t1),str(t2)))
+          
             rows= db.fetchall()#average power
+        
+            start = time.time()
             for sl in rows:
                 if(sl[0]!=None):
                     power_raw=[round(sl[0],2)]
                     power_list.append((date_find+" "+str(t2),power_raw[0]))
-
+            
 
     print("done with AC Power list")
     enable_server +=1 
@@ -174,7 +177,7 @@ voltage_pv__thread = Thread(target=getPanel_voltage)
 
 @app.route('/')
 def index():
-    global date_today,date_yesterday,power_ac_thread,power_pv__thread,current_pv__thread,voltage_pv__thread
+    global date_to_find,power_ac_thread,power_pv__thread,current_pv__thread,voltage_pv__thread,enable_server
     print("index")
     start = time.time()
     power_ac_thread.start()
@@ -185,8 +188,10 @@ def index():
     power_pv__thread.join()
     current_pv__thread.join()
     voltage_pv__thread.join()
-    print(f"delta time: {time.time()-start}")
-    return render_template('index.html', title='Sensor1',date_t=date_today,date_y=date_yesterday, max=30)
+    print(enable_server)
+    delta_time = round((time.time()-start)/60,2)
+    print(f"delta time: {delta_time}")
+    return render_template('index.html', title='Sensor1',date_t=date_to_find,date_y=date_to_find, max=30)
 
 
 #*********************************************************************************AC POWER
@@ -196,6 +201,7 @@ def sensorAC():
     def generate_random_data():
         with app.app_context(): 
             global path,sql_dayrecords,cur,reset,power_list,date_today,date_yesterday,enable_server
+            print(f"enable server: {enable_server}")
             if enable_server >=4:
                 m_date = date_today
                 newdate =[]
