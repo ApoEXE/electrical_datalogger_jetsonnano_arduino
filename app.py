@@ -90,10 +90,10 @@ def gather_data():
         time.sleep(0.2)  # Wait for device to actually settle down
         named_tuple = time.localtime() # get struct_time
         date_str,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
-        if(time_hr=='06:00:00'):
+        if(time_hr=='06:30:00'):
             bus.write_byte_data(address, 0, 0x0C)#LOW  ENERGY IN
         if(time_hr=='00:00:00'):
-            bus.write_byte_data(address, 0, 0x0B)#HIGH NOT ENERGY IBN
+            bus.write_byte_data(address, 0, 0x0B)#HIGH NOT ENERGY IN
         #bus.write_byte_data(address, 0, 0x0B)
         #time.sleep(0.2)  # Wait for device to actually settle down
         #VOLTAGE-----------
@@ -197,30 +197,35 @@ def gather_loop():
         if(d1!=""):
             conn.execute("INSERT INTO parameters (DATE,TIME,VOLTAGE,CURRENT,POWER,PANEL_VOLTAGE,PANEL_CURRENT,PANEL_POWER) \
             VALUES ( ?, ?, ?, ?, ?,?,?,? )",(d1,d2,var_volt_ac,var_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power))
-            conn.commit()
-            print(d1,end=" ")
-            print(d2,end=" ")
-            print(f"panel Volt: {m_panel_volt }V",end=" ")
-            print(f"panel Watts: {m_panel_power }W",end=" ")
-            print(f"panel Amp: {m_panel_current }A")
-            print(d1,end=" ")
-            print(d2,end=" ")
-            print('AC Voltage in ',end="")
+            try:
+                conn.commit()
 
-            print(var_volt_ac,end="")
+                print(d1,end=" ")
+                print(d2,end=" ")
+                print(f"panel Volt: {m_panel_volt }V",end=" ")
+                print(f"panel Watts: {m_panel_power }W",end=" ")
+                print(f"panel Amp: {m_panel_current }A")
+                print(d1,end=" ")
+                print(d2,end=" ")
+                print('AC Voltage in ',end="")
 
-            print(' V',end="")
+                print(var_volt_ac,end="")
 
-            print(' AC Current in ',end="")
-            print(var_current_ac,end="")
-  
-            print(' A  ', end='')
-            print(' AC POWER ',end="")
-            print(POWER,end="")
-  
-            print(' W ')
+                print(' V',end="")
 
-            time.sleep(0.2)
+                print(' AC Current in ',end="")
+                print(var_current_ac,end="")
+    
+                print(' A  ', end='')
+                print(' AC POWER ',end="")
+                print(POWER,end="")
+    
+                print(' W ')
+
+                time.sleep(0.2)
+            except Exception as e:
+                print(f"error SQLITE")
+                print(e)
     conn.close()
     print("Gather thread stopped")
     

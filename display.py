@@ -46,8 +46,8 @@ def socket_loop():
             try:
                 s.connect(("127.0.0.1",12345))
                 data = s.recv(4096)
-                if not data:
-                        break
+                #if not data:
+                        #break
                 data = data.decode('utf-8')
                 line = eval(data)
                 if(line[0]!=""):
@@ -62,10 +62,10 @@ def socket_loop():
                         if(line_before!=line):
                             print(line)
                             line_before = line
+                time.sleep(1)
             except Exception as e:
                 print("Connection refused")
                 print(e)
-                break
     print("Exit socket_reconnection")
 
 
@@ -93,8 +93,13 @@ def display_oled():
 
         # Clear display.
         disp.clear()
-        disp.display()
-
+        try:
+            disp.display()
+            displayup = True
+        except Exception as e:
+                print(f"error I2C display")
+                print(e)
+                displayup = False
         # Create blank image for drawing.
         # Make sure to create image with mode '1' for 1-bit color.
         width = disp.width
