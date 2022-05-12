@@ -30,10 +30,26 @@ reset2 = 0
 old_date = ""
 date_to_find = "2022-05-10"
 db_backup = "ac_telemetry_backup.db"
+avg_pv_power = 80.1
+avg_pv_current = 70.1
+avg_pv_voltage = 60.1
+avg_pv_power_load = 20.1
+avg_pv_power_ac = 10.1
+avg_pv_current_ac = 40.1
+avg_pv_voltage_ac = 50.1
+
+up_to_hour = 1
+up_to_min = 59
+
 cmd = "cp -a ac_telemetry.db ac_telemetry_backup.db"
 returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
 print("databased backed")
 time.sleep(1)
+
+
+
+
+
 conn = sqlite3.connect(db_backup, check_same_thread=False)
 cur = conn.cursor()
 
@@ -60,15 +76,15 @@ sql_dayrecords =f" select * from parameters where date > '{date_yesterday}' and 
 #sql_avg_minute ="select avg(power) from ac_parameters where date >= '2022/04/25' and time >= '?' and time <= '?' and voltage > 200;"
 
 def getPanelPower():
-    global db_backup,power_list_panel,enable_server,date_to_find
+    global db_backup,power_list_panel,enable_server,date_to_find,up_to_hour,up_to_min
     power_list_panel = []
     date_find =date_to_find
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
     print("getting Panel Power list")
-    for hour in range(24):
-        for min in range(59):
+    for hour in range(up_to_hour):
+        for min in range(up_to_min):
             t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
             t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
             sql_avg_minute ="select avg(PANEL_POWER) from parameters where date >= ? and time >= ? and time <= ?;"
@@ -86,15 +102,15 @@ def getPanelPower():
     return power_list_panel
 
 def getPanel_voltage():
-    global db_backup,voltage_list_panel,enable_server,date_to_find
+    global db_backup,voltage_list_panel,enable_server,date_to_find,up_to_hour,up_to_min
     voltage_list_panel = []
     date_find =date_to_find
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
     print("getting PV Volt list")
-    for hour in range(24):
-        for min in range(59):
+    for hour in range(up_to_hour):
+        for min in range(up_to_min):
             t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
             t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
             sql_avg_minute ="select avg(PANEL_VOLTAGE) from parameters where date >= ? and time >= ? and time <= ?;"
@@ -113,15 +129,15 @@ def getPanel_voltage():
 
 
 def getPanel_current():
-    global db_backup,current_list_panel,enable_server,date_to_find
+    global db_backup,current_list_panel,enable_server,date_to_find,up_to_hour,up_to_min
     current_list_panel = []
     date_find =date_to_find
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
     print("getting PanelCurrent list")
-    for hour in range(24):
-        for min in range(59):
+    for hour in range(up_to_hour):
+        for min in range(up_to_min):
             t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
             t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
             sql_avg_minute ="select avg(PANEL_CURRENT) from parameters where date >= ? and time >= ? and time <= ?;"
@@ -139,15 +155,15 @@ def getPanel_current():
 
 #************************************** AC Power
 def getPower():
-    global db_backup,power_list,enable_server,date_to_find
+    global db_backup,power_list,enable_server,date_to_find,up_to_hour,up_to_min
     power_list = []
     date_find =date_to_find
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
     print("getting AC list")
-    for hour in range(24):
-        for min in range(59):
+    for hour in range(up_to_hour):
+        for min in range(up_to_min):
             t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
             t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
             sql_avg_minute ="select avg(power) from parameters where date >= ? and time >= ? and time <= ? and voltage > 200;"           
@@ -301,6 +317,25 @@ def sensorCurrentPV():
             time.sleep(1)
 
     return Response(generate_random_data(), mimetype='text/event-stream')
+
+
+
+@app.route("/extract_data", methods=['POST'])
+def extractData():
+    with app.app_context():
+        global avg_pv_power,avg_pv_current,avg_pv_voltage,avg_pv_power_load,avg_pv_power_ac,avg_pv_current_ac,avg_pv_voltage_ac
+
+        
+
+        return jsonify({'avg_pv_power': avg_pv_power,
+                        'avg_pv_current': avg_pv_current,
+                        'avg_pv_voltage': avg_pv_voltage,
+                        'avg_pv_power_load': avg_pv_power_load,
+                        'avg_pv_power_ac': avg_pv_power_ac,
+                        'avg_pv_current_ac': avg_pv_current_ac,
+                        'avg_pv_voltage_ac': avg_pv_voltage_ac})
+
+
 
 
 

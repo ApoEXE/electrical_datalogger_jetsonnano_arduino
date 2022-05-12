@@ -10,86 +10,31 @@
             });
 
             req.done(function(data) {
-                sensor=data.sensor;
-                difftimeSensor=data.difftimeSensor;
-                totalpointsSensor=data.totalpointsSensor;
-                biggestTimeSensor=data.biggestTimeSensor;
-                smallestTimeSensor=data.smallestTimeSensor;
-                totalpointsDead=data.totalpointsDead;
-                totalpointsClean=data.totalpointsClean;
-                totalpointsTxFail=data.totalpointsTxFail;
+                avg_pv_power=data.avg_pv_power;
+                avg_pv_current=data.avg_pv_current;
+                avg_pv_voltage=data.avg_pv_voltage;
+                avg_pv_power_load=data.avg_pv_power_load;
+                avg_pv_power_ac=data.avg_pv_power_ac;
+                avg_pv_current_ac=data. avg_pv_current_ac;
+                avg_pv_voltage_ac=data.avg_pv_voltage_ac;
+
                 viewData();
             });
     }
 
     function viewData() {
-        if(sensor==1){
-        document.getElementById("sensor1").innerHTML =
-            "<td>"+  sensor    +"</td>" +
-            "<td>" + difftimeSensor + "</td>" +
-            "<td>" + totalpointsSensor + "</td>" +
-            "<td>" + biggestTimeSensor + "</td>" +
-            "<td>" + smallestTimeSensor + "</td>" +
-            "<td>" + totalpointsDead + "</td>" +
-            "<td>" + totalpointsClean + "</td>" +
-            "<td>" + totalpointsTxFail + "</td>";
-        }
-        if(sensor==2){
-        document.getElementById("sensor2").innerHTML =
-            "<td>"+  sensor    +"</td>" +
-            "<td>" + difftimeSensor + "</td>" +
-            "<td>" + totalpointsSensor + "</td>" +
-            "<td>" + biggestTimeSensor + "</td>" +
-            "<td>" + smallestTimeSensor + "</td>" +
-            "<td>" + totalpointsDead + "</td>" +
-            "<td>" + totalpointsClean + "</td>" +
-            "<td>" + totalpointsTxFail + "</td>";
-        }
-        if(sensor==3){
-            document.getElementById("sensor3").innerHTML =
-            "<td>"+  sensor    +"</td>" +
-            "<td>" + difftimeSensor + "</td>" +
-            "<td>" + totalpointsSensor + "</td>" +
-            "<td>" + biggestTimeSensor + "</td>" +
-            "<td>" + smallestTimeSensor + "</td>" +
-            "<td>" + totalpointsDead + "</td>" +
-            "<td>" + totalpointsClean + "</td>" +
-            "<td>" + totalpointsTxFail + "</td>";
-        }
-        if(sensor==4){
-            document.getElementById("sensor4").innerHTML =
-            "<td>"+  sensor    +"</td>" +
-            "<td>" + difftimeSensor + "</td>" +
-            "<td>" + totalpointsSensor + "</td>" +
-            "<td>" + biggestTimeSensor + "</td>" +
-            "<td>" + smallestTimeSensor + "</td>" +
-            "<td>" + totalpointsDead + "</td>" +
-            "<td>" + totalpointsClean + "</td>" +
-            "<td>" + totalpointsTxFail + "</td>";
-        }
 
-        if(sensor==5){
-            document.getElementById("sensor5").innerHTML =
-            "<td>"+  sensor    +"</td>" +
-            "<td>" + difftimeSensor + "</td>" +
-            "<td>" + totalpointsSensor + "</td>" +
-            "<td>" + biggestTimeSensor + "</td>" +
-            "<td>" + smallestTimeSensor + "</td>" +
-            "<td>" + totalpointsDead + "</td>" +
-            "<td>" + totalpointsClean + "</td>" +
-            "<td>" + totalpointsTxFail + "</td>";
-        }
-        if(sensor==6){
-             document.getElementById("sensor6").innerHTML =
-            "<td>"+  sensor    +"</td>" +
-            "<td>" + difftimeSensor + "</td>" +
-            "<td>" + totalpointsSensor + "</td>" +
-            "<td>" + biggestTimeSensor + "</td>" +
-            "<td>" + smallestTimeSensor + "</td>" +
-            "<td>" + totalpointsDead + "</td>" +
-            "<td>" + totalpointsClean + "</td>" +
-            "<td>" + totalpointsTxFail + "</td>";
-        }
+        document.getElementById("sensor1").innerHTML =
+            "<td>"+  avg_pv_power    +"</td>" +
+            "<td>" + avg_pv_current + "</td>" +
+            "<td>" + avg_pv_voltage + "</td>" +
+            "<td>" + avg_pv_power_load + "</td>" +
+            "<td>" + avg_pv_power_ac + "</td>" +
+            "<td>" + avg_pv_current_ac + "</td>" +
+            "<td>" + avg_pv_voltage_ac + "</td>";
+
+       
+     
     }
   setInterval(extractCsv, 1000);
 

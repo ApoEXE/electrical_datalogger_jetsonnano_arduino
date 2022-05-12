@@ -1,4 +1,26 @@
 {% extends "layout.html" %}
+
+
+{% block content5 %}
+<div>
+    <h1>REPORTE</h1>
+    <table>
+        <tr>
+            <th>PV power from sun</th>
+            <th>PV current</th>
+            <th>PV voltage</th>
+            <th>PV power to LOAD</th>
+            <th>POWER AC</th>
+            <th>VOLTAGE AC</th>
+            <th>CURRENT AC</th>
+
+        </tr>
+        <tr id=sensor1></tr>
+    </table>
+</div>
+<script type="text/javascript" src="/static/report.js"></script>
+{% endblock content5 %}
+
 {% block content1 %}
 <h1>PV Voltage {{date_t}}</h1>
 
