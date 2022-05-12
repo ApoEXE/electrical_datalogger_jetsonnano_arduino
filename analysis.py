@@ -306,7 +306,7 @@ def sensorCurrentPV():
                 newCurrent = []
                 print("calling _sensor2")
                 if(reset2==0):
-                    
+               
                     newdate = [date[0] for date in current_list_panel]
                     newCurrent = [power[1] for power in current_list_panel]
 
@@ -323,9 +323,28 @@ def sensorCurrentPV():
 @app.route("/extract_data", methods=['POST'])
 def extractData():
     with app.app_context():
-        global avg_pv_power,avg_pv_current,avg_pv_voltage,avg_pv_power_load,avg_pv_power_ac,avg_pv_current_ac,avg_pv_voltage_ac
+        global date_to_find,  avg_pv_power,avg_pv_current,avg_pv_voltage,avg_pv_power_load,avg_pv_power_ac,avg_pv_current_ac,avg_pv_voltage_ac
+        date_find =date_to_find
+        t1 = "00:00:00"
+        t2 = "23:59::00"
+        conn = sqlite3.connect(db_backup, check_same_thread=False)
+        db = conn.cursor()
 
+
+        sql_avg_minute ="select avg(power) from parameters where date >= ? and time >= ? and time <= ? and voltage > 200;"           
+        db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
+        rows= db.fetchall()#average power
+        avg_pv_power_ac = [value[0] for value in rows]
+        avg_pv_power_ac = round(avg_pv_power_ac[0],2)
+        print(f"Power AC avg on {date_find} : {avg_pv_power_ac}")
         
+        sql_avg_minute ="select avg(PANEL_CURRENT)*avg(PANEL_VOLTAGE) from parameters where date >= ? and time >= ? and time <= ? and PANEL_VOLTAGE > 5;"           
+        db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
+        rows= db.fetchall()#average power
+        avg_pv_power_load = [value[0] for value in rows]
+        avg_pv_power_load = round(avg_pv_power_load[0],2)
+        print(f"Power PV Load on {date_find} : {avg_pv_power_load}")
+
 
         return jsonify({'avg_pv_power': avg_pv_power,
                         'avg_pv_current': avg_pv_current,
