@@ -28,7 +28,7 @@ current_list_panel=[]
 reset = 0
 reset2 = 0
 old_date = ""
-date_to_find = "2022-05-10"
+date_to_find = "2022-05-13"
 db_backup = "ac_telemetry_backup.db"
 avg_pv_power = 80.1
 avg_pv_current = 70.1
@@ -38,7 +38,7 @@ avg_pv_power_ac = 10.1
 avg_pv_current_ac = 40.1
 avg_pv_voltage_ac = 50.1
 
-up_to_hour = 1
+up_to_hour = 24
 up_to_min = 59
 
 cmd = "cp -a ac_telemetry.db ac_telemetry_backup.db"
@@ -275,19 +275,21 @@ def sensorVoltPV():
     
     def generate_random_data():
         with app.app_context(): 
-            global path,sql_dayrecords,cur,reset,voltage_list_panel,reset2,date_today,enable_server
+            global path,sql_dayrecords,cur,reset,voltage_list_panel,current_list_panel,reset2,date_today,enable_server
             if enable_server >=4:
                 m_date = date_today
                 newdate =[]
                 newCurrent = []
+                newVoltage = []
                 print("calling _sensor2")
                 if(reset2==0):
                     
                     newdate = [date[0] for date in voltage_list_panel]
-                    newCurrent = [power[1] for power in voltage_list_panel]
+                    newCurrent = [current[1] for current in current_list_panel]
+                    newVoltage = [voltage[1] for voltage in voltage_list_panel]
 
                     print(f"total records {len(newdate)-1}")
-                json_data = json.dumps({'date_panel': newdate, 'var_panel_volt': newCurrent, 'reset2':reset2,'date_analisys_2':m_date}, default=str)
+                json_data = json.dumps({'date_panel': newdate, 'var_panel_current': newCurrent,'var_panel_volt':newVoltage, 'reset2':reset2,'date_analisys_2':m_date}, default=str)
                 yield f"data:{json_data}\n\n"
             
             time.sleep(1)
@@ -336,15 +338,52 @@ def extractData():
         rows= db.fetchall()#average power
         avg_pv_power_ac = [value[0] for value in rows]
         avg_pv_power_ac = round(avg_pv_power_ac[0],2)
-        print(f"Power AC avg on {date_find} : {avg_pv_power_ac}")
+        #print(f"Power AC avg on {date_find} : {avg_pv_power_ac}")
         
         sql_avg_minute ="select avg(PANEL_CURRENT)*avg(PANEL_VOLTAGE) from parameters where date >= ? and time >= ? and time <= ? and PANEL_VOLTAGE > 5;"           
         db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
         rows= db.fetchall()#average power
         avg_pv_power_load = [value[0] for value in rows]
         avg_pv_power_load = round(avg_pv_power_load[0],2)
-        print(f"Power PV Load on {date_find} : {avg_pv_power_load}")
+        #print(f"Power PV Load on {date_find} : {avg_pv_power_load}")
 
+
+        sql_avg_minute ="select (avg(PANEL_VOLTAGE)*100/22.5) from parameters where date >= ? and time >= ? and time <= ? and PANEL_VOLTAGE > 5;"           
+        db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
+        rows= db.fetchall()#average power
+        avg_pv_power = [value[0] for value in rows]
+        avg_pv_power = round(avg_pv_power[0],2)
+        #print(f"Power PV from voltage on {date_find} : {avg_pv_power}")
+
+
+        sql_avg_minute ="select avg(PANEL_CURRENT) from parameters where date >= ? and time >= ? and time <= ? and PANEL_VOLTAGE > 5;"           
+        db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
+        rows= db.fetchall()#average power
+        avg_pv_current = [value[0] for value in rows]
+        avg_pv_current = round(avg_pv_current[0],2)
+        #print(f"Current PV on {date_find} : {avg_pv_current}")
+
+
+        sql_avg_minute ="select avg(PANEL_VOLTAGE) from parameters where date >= ? and time >= ? and time <= ? and PANEL_VOLTAGE > 5;"           
+        db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
+        rows= db.fetchall()#average power
+        avg_pv_voltage = [value[0] for value in rows]
+        avg_pv_voltage = round(avg_pv_voltage[0],2)
+        #print(f"Voltage PV on {date_find} : {avg_pv_voltage}")
+
+        sql_avg_minute ="select avg(CURRENT) from parameters where date >= ? and time >= ? and time <= ? and  VOLTAGE > 200;"           
+        db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
+        rows= db.fetchall()#average power
+        avg_pv_current_ac = [value[0] for value in rows]
+        avg_pv_current_ac = round(avg_pv_current_ac[0],2)
+        #print(f"AC Current on {date_find} : {avg_pv_current_ac}")
+
+        sql_avg_minute ="select avg(VOLTAGE) from parameters where date >= ? and time >= ? and time <= ? and VOLTAGE > 200;"           
+        db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
+        rows= db.fetchall()#average power
+        avg_pv_voltage_ac = [value[0] for value in rows]
+        avg_pv_voltage_ac = round(avg_pv_voltage_ac[0],2)
+        #print(f"AC Voltage on {date_find} : {avg_pv_voltage_ac}")
 
         return jsonify({'avg_pv_power': avg_pv_power,
                         'avg_pv_current': avg_pv_current,

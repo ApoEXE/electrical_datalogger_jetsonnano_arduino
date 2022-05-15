@@ -15,7 +15,7 @@
                 avg_pv_voltage=data.avg_pv_voltage;
                 avg_pv_power_load=data.avg_pv_power_load;
                 avg_pv_power_ac=data.avg_pv_power_ac;
-                avg_pv_current_ac=data. avg_pv_current_ac;
+                avg_pv_current_ac=data.avg_pv_current_ac;
                 avg_pv_voltage_ac=data.avg_pv_voltage_ac;
 
                 viewData();
