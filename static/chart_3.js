@@ -10,13 +10,15 @@ $(document).ready(function () {
                 label: "PV Voltage",
                 backgroundColor: 'rgb(255, 99, 132)',
                 borderColor: 'rgb(255, 99, 132)',
+                yAxisID: 'voltage',
                 data: [],
                 fill: false,
             }, {
                 type: 'line',
                 label: "PV Current",
-                backgroundColor: 'rgb(255, 99, 132)',
-                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgb(0, 0, 255)',
+                borderColor: 'rgb(0, 0, 255)',
+                yAxisID: 'current',
                 data: [],
                 fill: false,
             }],
@@ -40,17 +42,35 @@ $(document).ready(function () {
             },
             scales: {
                 xAxes: [{
+                    beginAtZero: true,
                     display: true,
                     scaleLabel: {
                         display: true,
                         labelString: 'Time'
                     }
                 }],
+
                 yAxes: [{
+                    id: 'voltage',
                     display: true,
+                    type: 'linear',
+                    position: 'left',
                     scaleLabel: {
                         display: true,
-                        labelString: 'Value'
+                        labelString: 'PV Voltage'
+                    }
+                }, {
+                    id: 'current',
+                    display: true,
+                    type: 'linear',
+                    position: 'right',
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'PV Current'
+                    },
+                    ticks: {
+                        max: 3,
+                        min: 0
                     }
                 }]
             }

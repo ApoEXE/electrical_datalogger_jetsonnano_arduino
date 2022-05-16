@@ -38,6 +38,7 @@ $(document).ready(function () {
                         }
                     }],
                     yAxes: [{
+                        
                         display: true,
                         scaleLabel: {
                             display: true,
@@ -54,7 +55,7 @@ $(document).ready(function () {
 
         const source = new EventSource("/_sensor2");
         
-        const date_analisys_2 = "";
+
 
         reset_value_2 = 0;
         source.onmessage = function (event) {

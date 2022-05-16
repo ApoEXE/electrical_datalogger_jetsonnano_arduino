@@ -28,15 +28,15 @@ current_list_panel=[]
 reset = 0
 reset2 = 0
 old_date = ""
-date_to_find = "2022-05-13"
+date_to_find = "2022-05-16"
 db_backup = "ac_telemetry_backup.db"
-avg_pv_power = 80.1
-avg_pv_current = 70.1
-avg_pv_voltage = 60.1
-avg_pv_power_load = 20.1
-avg_pv_power_ac = 10.1
-avg_pv_current_ac = 40.1
-avg_pv_voltage_ac = 50.1
+avg_pv_power = 0.0
+avg_pv_current = 0.0
+avg_pv_voltage = 0.0
+avg_pv_power_load = 0.0
+avg_pv_power_ac = 0.0
+avg_pv_current_ac = 0.0
+avg_pv_voltage_ac = 0.0
 
 up_to_hour = 24
 up_to_min = 59
@@ -193,17 +193,23 @@ voltage_pv__thread = Thread(target=getPanel_voltage)
 
 @app.route('/')
 def index():
-    global date_to_find,power_ac_thread,power_pv__thread,current_pv__thread,voltage_pv__thread,enable_server
+    global date_to_find,power_ac_thread,power_pv__thread,current_pv__thread,voltage_pv__thread,enable_server,power_list
     print("index")
     start = time.time()
-    power_ac_thread.start()
-    power_pv__thread.start()
-    current_pv__thread.start()
-    voltage_pv__thread.start()
-    power_ac_thread.join()
-    power_pv__thread.join()
-    current_pv__thread.join()
-    voltage_pv__thread.join()
+    try:
+        power_ac_thread.start()
+        power_pv__thread.start()
+        current_pv__thread.start()
+        voltage_pv__thread.start()
+        power_ac_thread.join()
+        power_pv__thread.join()
+        current_pv__thread.join()
+        voltage_pv__thread.join()
+        newdate = [date[0] for date in power_list]
+        print(newdate[0])
+    except Exception as e:
+        print("Cannot restart thread")
+        print(e)
     print(enable_server)
     delta_time = round((time.time()-start)/60,2)
     print(f"delta time: {delta_time}")
@@ -399,7 +405,7 @@ def extractData():
 
 if __name__ == '__main__':
 
-    app.run(debug=True, threaded=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, threaded=True, host='0.0.0.0', port=5000)
 
 
 ''' 
