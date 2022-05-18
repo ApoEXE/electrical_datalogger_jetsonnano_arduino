@@ -19,7 +19,7 @@ $(document).ready(function () {
                 },
                 title: {
                     display: true,
-                    text: 'Power Panel (W) real time Plotting'
+                    text: 'Power Produced Panel (W) real time Plotting'
                 },
                 tooltips: {
                     mode: 'index',
@@ -68,7 +68,7 @@ $(document).ready(function () {
                 
                 config.data.labels.push(data.date_panel[index]);
                 config.data.datasets[0].data.push(data.var_panel[index]);
-                console.log(data.date_panel[index]);
+                //console.log(data.date_panel[index]);
                 lineChart.update();
                 if(data.date_panel.length>1){
                     reset_value_2=1;

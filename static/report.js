@@ -17,6 +17,7 @@
                 avg_pv_power_ac=data.avg_pv_power_ac;
                 avg_pv_current_ac=data.avg_pv_current_ac;
                 avg_pv_voltage_ac=data.avg_pv_voltage_ac;
+                date1=data.date1;
 
                 viewData();
             });
@@ -25,6 +26,16 @@
     function viewData() {
 
         document.getElementById("sensor1").innerHTML =
+            "<td>"+  date1   +"</td>" +
+            "<td>"+  avg_pv_power    +"</td>" +
+            "<td>" + avg_pv_current + "</td>" +
+            "<td>" + avg_pv_voltage + "</td>" +
+            "<td>" + avg_pv_power_load + "</td>" +
+            "<td>" + avg_pv_power_ac + "</td>" +
+            "<td>" + avg_pv_current_ac + "</td>" +
+            "<td>" + avg_pv_voltage_ac + "</td>";
+            document.getElementById("sensor2").innerHTML =
+            "<td>2022-05-15</td>" +
             "<td>"+  avg_pv_power    +"</td>" +
             "<td>" + avg_pv_current + "</td>" +
             "<td>" + avg_pv_voltage + "</td>" +

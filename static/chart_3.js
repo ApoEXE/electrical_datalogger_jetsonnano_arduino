@@ -21,6 +21,7 @@ $(document).ready(function () {
                 yAxisID: 'current',
                 data: [],
                 fill: false,
+                
             }],
         },
         options: {
@@ -55,19 +56,14 @@ $(document).ready(function () {
                     display: true,
                     type: 'linear',
                     position: 'left',
-                    scaleLabel: {
-                        display: true,
-                        labelString: 'PV Voltage'
-                    }
+                    labelString: 'PV Voltage',
+
                 }, {
                     id: 'current',
                     display: true,
                     type: 'linear',
                     position: 'right',
-                    scaleLabel: {
-                        display: true,
-                        labelString: 'PV Current'
-                    },
+                    labelString: 'PV Current',
                     ticks: {
                         max: 3,
                         min: 0
@@ -96,8 +92,8 @@ $(document).ready(function () {
                 config.data.datasets[0].data.push(python_data.var_panel_volt[index]);
                 config.data.datasets[1].data.push(python_data.var_panel_current[index]);
 
-                console.log(python_data.var_panel_current[index]);
-                console.log(python_data.var_panel_volt[index]);
+                //console.log(python_data.var_panel_current[index]);
+                //console.log(python_data.var_panel_volt[index]);
                 lineChart.update();
                 if (python_data.date_panel.length > 1) {
                     reset_value_3 = 1;

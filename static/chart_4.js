@@ -54,7 +54,7 @@ $(document).ready(function () {
 
         const source = new EventSource("/_sensor4");
 
-        const date_analisys = "";
+
 
         reset_value_4 = 0;
         source.onmessage = function (event) {
@@ -65,7 +65,7 @@ $(document).ready(function () {
                 
                 config.data.labels.push(data.date_panel[index]);
                 config.data.datasets[0].data.push(data.var_panel_cur[index]);
-                console.log(data.date_panel[index]);
+                //console.log(data.date_panel[index]);
                 lineChart.update();
                 if(data.date_panel.length>1){
                 reset_value_4=1;
