@@ -8,11 +8,12 @@ $(document).ready(function () {
             datasets: [{
                 type: 'line',
                 label: "PV Voltage",
-                backgroundColor: 'rgb(255, 99, 132)',
-                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgb(255, 0, 0)',
+                borderColor: 'rgb(255, 0, 0)',
                 yAxisID: 'voltage',
                 data: [],
                 fill: false,
+                order: 1
             }, {
                 type: 'line',
                 label: "PV Current",
@@ -21,7 +22,8 @@ $(document).ready(function () {
                 yAxisID: 'current',
                 data: [],
                 fill: false,
-                
+                order: 2
+
             }],
         },
         options: {
@@ -56,7 +58,7 @@ $(document).ready(function () {
                     display: true,
                     type: 'linear',
                     position: 'left',
-                    labelString: 'PV Voltage',
+                    labelString: 'PV Voltage'
 
                 }, {
                     id: 'current',
