@@ -290,11 +290,11 @@ solar_saved_thread = Thread(target=getPower_saved)
 @app.route('/')
 def index():
     global power_ac_thread,power_pv_thread,current_pv_thread,voltage_pv_thread,enable_server,power_list,solar_saved_thread
-    power_ac_thread.start()
-    power_pv_thread.start()
-    current_pv_thread.start()
-    voltage_pv_thread.start()
-    solar_saved_thread.start()
+    #power_ac_thread.start()
+    #power_pv_thread.start()
+    #current_pv_thread.start()
+    #voltage_pv_thread.start()
+    #solar_saved_thread.start()
 
     return render_template('index.html', title='Sensor1',date_t=getDate(0),date_y=getDate(1), max=30)
 
@@ -720,11 +720,11 @@ if __name__ == '__main__':
         current_pv_thread.start()
         voltage_pv_thread.start()
         solar_saved_thread.start()
-        #power_ac_thread.join()
-        #power_pv_thread.join()
-        #current_pv_thread.join()
-        #voltage_pv_thread.join()
-        #solar_saved_thread.join()
+        power_ac_thread.join()
+        power_pv_thread.join()
+        current_pv_thread.join()
+        voltage_pv_thread.join()
+        solar_saved_thread.join()
 
         #newdate = [date[0] for date in power_list]
         #print(newdate[0])
