@@ -103,7 +103,7 @@ void loop()
     Serial.println(cmd, HEX);
     break;
   case 0x0C:
-    digitalWrite(rele, LOW); //disabled
+    digitalWrite(rele, LOW); //enable
     Serial.print("received: ");
     Serial.println(cmd, HEX);
     break;

@@ -90,10 +90,18 @@ def gather_data():
         time.sleep(0.2)  # Wait for device to actually settle down
         named_tuple = time.localtime() # get struct_time
         date_str,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
-        if(time_hr=='06:30:00'):
-            bus.write_byte_data(address, 0, 0x0C)#LOW  ENERGY IN
-        if(time_hr=='00:00:00'):
-            bus.write_byte_data(address, 0, 0x0B)#HIGH NOT ENERGY IN
+        time_turnon ='06:30:00'
+        time_turnoff='00:00:00'
+        turnON = time.strptime(time_turnon, "%H:%M:%S")
+        turnOFF = time.strptime(time_turnoff, "%H:%M:%S")
+        time_hr = time.strptime(time_hr, "%H:%M:%S")
+        #print(f"{turnOFF} {turnON} {time_hr}")
+        if(time_hr>=turnON and time_hr < turnOFF):
+            bus.write_byte_data(address, 0, 0x0C)#LOW  TURN ON
+            print("TURN ON")
+        if(time_hr<turnON and time_hr >= turnOFF):
+            bus.write_byte_data(address, 0, 0x0B)#HIGH TURN OFF
+            print("TURN OFF")
         #bus.write_byte_data(address, 0, 0x0B)
         #time.sleep(0.2)  # Wait for device to actually settle down
         #VOLTAGE-----------
