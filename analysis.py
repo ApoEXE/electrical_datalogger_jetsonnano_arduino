@@ -278,6 +278,22 @@ def getPower_saved():
 
 #******************THREADSA
 
+def power_ac_loop():
+    while True:
+        getPower()
+def power_solar_loop():
+    while True:
+        getPanelPower()
+def power_saved_solar_loop():
+    while True:
+        getPower_saved()
+def panel_current_loop():
+    while True:
+        getPanel_current()
+def panel_voltage_loop():
+    while True:
+        getPanel_voltage()
+
 current_pv_thread = Thread(target=getPanel_current)
 voltage_pv_thread = Thread(target=getPanel_voltage)
 
@@ -285,6 +301,12 @@ power_ac_thread = Thread(target=getPower)
 power_pv_thread = Thread(target=getPanelPower)
 solar_saved_thread = Thread(target=getPower_saved)
 
+
+loop_power_ac_thread = Thread(target=power_ac_loop)
+loop_power_solar_thread = Thread(target=power_solar_loop)
+loop_power_solar_saved_thread = Thread(target=power_saved_solar_loop)
+loop_solar_current_thread = Thread(target=getPanel_current)
+loop_solar_voltage_thread = Thread(target=getPanel_voltage)
 
 
 @app.route('/')
@@ -725,15 +747,18 @@ if __name__ == '__main__':
         current_pv_thread.join()
         voltage_pv_thread.join()
         solar_saved_thread.join()
-
-        #newdate = [date[0] for date in power_list]
-        #print(newdate[0])
+        delta_time = round((time.time()-start)/60,2)
+        print(f"delta time: {delta_time} min")
+        loop_power_ac_thread.start()
+        loop_power_solar_saved_thread.start()
+        loop_power_solar_thread.start()
+        loop_solar_current_thread.start()
+        loop_solar_voltage_thread.start()
     except Exception as e:
         print("Cannot restart thread")
         print(e)
     print(enable_server)
-    delta_time = round((time.time()-start)/60,2)
-    print(f"delta time: {delta_time} min")
+
     from waitress import serve
     serve(app, host="0.0.0.0", port=5000)
         #app.run(debug=False, threaded=True, host='0.0.0.0', port=5000)
