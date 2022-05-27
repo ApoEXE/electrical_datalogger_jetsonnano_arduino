@@ -56,7 +56,7 @@ m_panel_power =""
 
 time_str = time.strptime(d2, "%H:%M:%S")
 hour_before = str(time_str.tm_hour)
-
+last_date = d1
 
 
 print(f"START at {time_hr} and hour_before: {hour_before}")
@@ -99,7 +99,7 @@ print ("Opened database  RESULTS successfully")
 db = conn.cursor()
 
 def gather_data():
-    global bus, hour_before,redifine_voltage, redifine_current,samples,start,redifine_panel_current,redifine_panel_voltage,samples_panel,panel_power
+    global bus,redifine_voltage, redifine_current,samples,start,redifine_panel_current,redifine_panel_voltage,samples_panel,panel_power
     address = 0x20
     try:
 
@@ -110,7 +110,7 @@ def gather_data():
         named_tuple = time.localtime() # get struct_time
         date_str,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
         time_turnon ='06:30:00'
-        time_turnoff='23:59:00'
+        time_turnoff='23:00:00'
         time_midnight='00:00:00'
         turnON = time.strptime(time_turnon, "%H:%M:%S")
         turnOFF = time.strptime(time_turnoff, "%H:%M:%S")
@@ -118,10 +118,13 @@ def gather_data():
         time_midnight = time.strptime(time_midnight, "%H:%M:%S")
         #print(f"{turnOFF} {turnON} {time_hr}")
         if(time_hr>=turnON and time_hr < turnOFF):
-            bus.write_byte_data(address, 0, 0x0C)#LOW  TURN ON
+            bus.write_byte_data(address, 0, 0x0C)#HIGH  TURN ON
             print("TURN ON")
-        if(time_hr<turnON and time_hr >= time_midnight):
-            bus.write_byte_data(address, 0, 0x0B)#HIGH TURN OFF
+        elif(time_hr<turnON and time_hr >= time_midnight):
+            bus.write_byte_data(address, 0, 0x0B)#LOW TURN OFF
+            print("TURN OFF")
+        else:# time_hr>=turnOFF
+            bus.write_byte_data(address, 0, 0x0B)#LOW TURN OFF
             print("TURN OFF")
 
         #bus.write_byte_data(address, 0, 0x0B)
@@ -219,7 +222,7 @@ def gather_data():
     return [d1,d2,m_volt_ac,m_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power]
 
 def gather_loop():
-    global db,conn,conn2,shutdown,start,var_volt_ac,var_current_ac,POWER,d1,d2,m_panel_volt,m_panel_current,m_panel_power,hour_before
+    global db,conn,conn2,shutdown,start,var_volt_ac,var_current_ac,POWER,d1,d2,m_panel_volt,m_panel_current,m_panel_power,hour_before,last_date
     print("Gathering DATA")
     start = time.time()
     while shutdown:
@@ -227,13 +230,36 @@ def gather_loop():
         if(d1!=""):
             conn.execute("INSERT INTO parameters (DATE,TIME,VOLTAGE,CURRENT,POWER,PANEL_VOLTAGE,PANEL_CURRENT,PANEL_POWER) \
             VALUES ( ?, ?, ?, ?, ?,?,?,?)",(d1,d2,var_volt_ac,var_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power))
-            tmp = time.strptime(d2, "%H:%M:%S")
-            print(f"{tmp.tm_hour}  vs {hour_before}")
-            if(int(tmp.tm_hour)!=int(hour_before)):
+            
+            tmp = time.strptime(d2, "%H:%M:%S")#now
+            tmp2 = time.strptime( hour_before+":00:00", "%H:%M:%S")#hour
+            if(tmp2.tm_hour<10):#hour before
+
+                string_t1 = "0"+str(tmp2.tm_hour)+":00:00"
+            else:
+                string_t1 = str(tmp2.tm_hour)+":00:00"
+
+
+            if(tmp.tm_hour<10):#now
+
+                string_t2 = "0"+str(tmp.tm_hour)+":00:00"
+            else:
+                string_t2 = str(tmp.tm_hour)+":00:00"
+                
+            if(int(tmp.tm_hour)==0):
+                string_t2 = "23:59:00"
+                d1 = last_date            
+      
+            print(f"{string_t2}  vs {string_t1}")
+       
+           
+            
+            #if(True):
+            if(int(tmp.tm_hour)!=int(tmp2.tm_hour)):
                 try:
 
-                    string_t1 = hour_before+":00:00"
-                    string_t2 = str(tmp.tm_hour)+":00:00"
+
+                    print(f"new string_t2 {string_t2} and before {string_t1} date {d1}")
                     sql_avg_minute ="select avg(power) from parameters where date == ? and time >= ? and time <= ?;"           
                     db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
                     rows= db.fetchall()#average power
@@ -288,13 +314,16 @@ def gather_loop():
                     avg_pv_voltage = [value[0] for value in rows]
                     avg_pv_voltage = round(avg_pv_voltage[0],2)
                     print(f"----------------------------------------------------AvgPV VOLTAGE Wh on {string_t2}-{string_t1}: {avg_pv_voltage}")
-                    hour_before= str(tmp.tm_hour)
+
                     conn2.execute("INSERT INTO summary (DATE,TIME,AC_VOLTAGE,AC_CURRENT,AC_POWER,PANEL_VOLTAGE,PANEL_CURRENT,PANEL_POWER,PANEL_LOAD) \
-                VALUES ( ?, ?, ?, ?, ?,?,?,? ,?)",(d1,str(tmp.tm_hour)+":00:00",avg_ac_voltage,avg_ac_current,avg_ac_power_wh,avg_pv_voltage,avg_pv_current,avg_pv_power_produced,avg_pv_power_consumed))
+                VALUES ( ?, ?, ?, ?, ?,?,?,? ,?)",(d1,string_t2,avg_ac_voltage,avg_ac_current,avg_ac_power_wh,avg_pv_voltage,avg_pv_current,avg_pv_power_produced,avg_pv_power_consumed))
                     conn2.commit()
                 except Exception as e:
                     print(f"error SQLITE summary")
+                    
                     print(e)
+                hour_before= str(tmp.tm_hour)
+                last_date,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
             try:
                 conn.commit()
 

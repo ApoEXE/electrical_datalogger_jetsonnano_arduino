@@ -28,7 +28,7 @@ unsigned int sample = 1;     //number of samples to take before sending to lcd
 
 
 const int led = 13;
-const int rele = 12;
+const int rele = 11;
 int led_state = LOW;
 
 void setup()
@@ -98,12 +98,12 @@ void loop()
     Serial.println(cmd, HEX);
     break;
   case 0x0B:
-    digitalWrite(rele, HIGH); //disabled
+    digitalWrite(rele, LOW); //disabled
     Serial.print("received: ");
     Serial.println(cmd, HEX);
     break;
   case 0x0C:
-    digitalWrite(rele, LOW); //enable
+    digitalWrite(rele, HIGH); //enable
     Serial.print("received: ");
     Serial.println(cmd, HEX);
     break;

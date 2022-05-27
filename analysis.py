@@ -172,6 +172,7 @@ def getPanel_current():
 def getPanelPower():
     global db_backup,power_list_panel,enable_server,up_to_hour,up_to_min,total_day_solar_power_produced
     power_list_panel = []
+    total_day_solar_power_produced=[]
     
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
@@ -206,7 +207,7 @@ def getPanelPower():
 def getPower():
     global db_backup,power_list,enable_server,up_to_hour,total_day_ac_power_used
     power_list = []
-    
+    total_day_ac_power_used=[]
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
@@ -242,7 +243,7 @@ def getPower():
 def getPower_saved():
     global db_backup,enable_server,up_to_hour,up_to_min,total_day_solar_power_used,solar_power_saved_list
     solar_power_saved_list = []
-    
+    total_day_solar_power_used=[]
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
@@ -281,18 +282,27 @@ def getPower_saved():
 def power_ac_loop():
     while True:
         getPower()
+        time.sleep(5)
+
 def power_solar_loop():
     while True:
         getPanelPower()
+        time.sleep(5)
+
 def power_saved_solar_loop():
     while True:
         getPower_saved()
+        time.sleep(5)
+
 def panel_current_loop():
     while True:
         getPanel_current()
+        time.sleep(5)
+
 def panel_voltage_loop():
     while True:
         getPanel_voltage()
+        time.sleep(5)
 
 current_pv_thread = Thread(target=getPanel_current)
 voltage_pv_thread = Thread(target=getPanel_voltage)
@@ -749,11 +759,11 @@ if __name__ == '__main__':
         solar_saved_thread.join()
         delta_time = round((time.time()-start)/60,2)
         print(f"delta time: {delta_time} min")
-        loop_power_ac_thread.start()
-        loop_power_solar_saved_thread.start()
-        loop_power_solar_thread.start()
-        loop_solar_current_thread.start()
-        loop_solar_voltage_thread.start()
+        #loop_power_ac_thread.start()
+        #loop_power_solar_saved_thread.start()
+        #loop_power_solar_thread.start()
+        #loop_solar_current_thread.start()
+        #loop_solar_voltage_thread.start()
     except Exception as e:
         print("Cannot restart thread")
         print(e)
