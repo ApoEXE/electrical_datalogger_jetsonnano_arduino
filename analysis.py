@@ -33,6 +33,7 @@ reset = 0
 reset2 = 0
 
 db_backup = "/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry_backup.db"
+db_result = "/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db"
 avg_pv_power = 0.0
 avg_pv_current = 0.0
 avg_pv_voltage = 0.0
@@ -446,12 +447,12 @@ def sensorCurrentPV():
 def extractData():
     with app.app_context():
         global avg_pv_power,avg_pv_current,avg_pv_voltage,avg_pv_power_load,avg_pv_power_ac,avg_pv_current_ac,avg_pv_voltage_ac
-        global total_day_ac_power_used,total_day_solar_power_produced,total_day_solar_power_used,date_today,enable_server
+        global total_day_ac_power_used,total_day_solar_power_produced,total_day_solar_power_used,enable_server
         global avg_pv_power,avg_pv_current,avg_pv_voltage,avg_pv_power_load,avg_pv_power_ac,avg_pv_current_ac,avg_pv_voltage_ac
         global avg_pv_power2,avg_pv_current2,avg_pv_voltage2,avg_pv_power_load2,avg_pv_power_ac2,avg_pv_current_ac2,avg_pv_voltage_ac2
         global avg_pv_power3,avg_pv_current3,avg_pv_voltage3,avg_pv_power_load3,avg_pv_power_ac3,avg_pv_current_ac3,avg_pv_voltage_ac3
         global avg_pv_power4,avg_pv_current4,avg_pv_voltage4,avg_pv_power_load4,avg_pv_power_ac4,avg_pv_current_ac4,avg_pv_voltage_ac4
-        global avg_pv_power5,avg_pv_current5,avg_pv_voltage5,avg_pv_power_load5,avg_pv_power_ac5,avg_pv_current_ac5,avg_pv_voltage_ac5
+        global db_result,avg_pv_power5,avg_pv_current5,avg_pv_voltage5,avg_pv_power_load5,avg_pv_power_ac5,avg_pv_current_ac5,avg_pv_voltage_ac5
         t1 = "00:00:00"
         t2 = "23:59::00"
         conn = sqlite3.connect(db_backup, check_same_thread=False)
@@ -467,11 +468,15 @@ def extractData():
 
         if(enable_server>=4):
             #*********************************************************TODAY  1
-            avg_pv_power_ac = total_day_ac_power_used[0]
-            date_find = avg_pv_power_ac[0]
-            date1=date_find
-            avg_pv_power_ac = round(avg_pv_power_ac[1],2)
-            #print(f"Power AC avg on {date_find} : {avg_pv_power_ac}")
+            conn2 = sqlite3.connect(db_result, check_same_thread=False)
+            db2 = conn2.cursor()
+            sql_avg_minute ="select SUM(AC_POWER) from summary where date == ?"
+            date1=getDate(0)
+            db2.execute(sql_avg_minute,(date1,)) 
+            rows= db2.fetchall()#average power
+            ac_power_value = [value[0] for value in rows]
+            avg_pv_power_ac = round(ac_power_value[0])
+            print(f"Power AC avg on {date1} : {avg_pv_power_ac}")
 
             avg_pv_power_load = total_day_solar_power_used[0]
             avg_pv_power_load = round(avg_pv_power_load[1],2)
@@ -483,7 +488,7 @@ def extractData():
 
 
             sql_avg_minute ="select avg(PANEL_CURRENT) from parameters where date == ? and time >= ? and time <= ? and PANEL_VOLTAGE > 5;"           
-            db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
+            db.execute(sql_avg_minute,(date1,str(t1),str(t2))) 
             rows= db.fetchall()#average power
             avg_pv_current = [value[0] for value in rows]
             avg_pv_current = round(avg_pv_current[0],2)
@@ -491,21 +496,21 @@ def extractData():
 
 
             sql_avg_minute ="select avg(PANEL_VOLTAGE) from parameters where date == ? and time >= ? and time <= ? and PANEL_VOLTAGE > 5;"           
-            db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
+            db.execute(sql_avg_minute,(date1,str(t1),str(t2))) 
             rows= db.fetchall()#average power
             avg_pv_voltage = [value[0] for value in rows]
             avg_pv_voltage = round(avg_pv_voltage[0],2)
             #print(f"Voltage PV on {date_find} : {avg_pv_voltage}")
 
             sql_avg_minute ="select avg(CURRENT) from parameters where date == ? and time >= ? and time <= ? and  VOLTAGE > 200;"           
-            db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
+            db.execute(sql_avg_minute,(date1,str(t1),str(t2))) 
             rows= db.fetchall()#average power
             avg_pv_current_ac = [value[0] for value in rows]
             avg_pv_current_ac = round(avg_pv_current_ac[0],2)
             #print(f"AC Current on {date_find} : {avg_pv_current_ac}")
 
             sql_avg_minute ="select avg(VOLTAGE) from parameters where date == ? and time >= ? and time <= ? and VOLTAGE > 200;"           
-            db.execute(sql_avg_minute,(date_find,str(t1),str(t2))) 
+            db.execute(sql_avg_minute,(date1,str(t1),str(t2))) 
             rows= db.fetchall()#average power
             avg_pv_voltage_ac = [value[0] for value in rows]
             avg_pv_voltage_ac = round(avg_pv_voltage_ac[0],2)
