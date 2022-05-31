@@ -22,7 +22,7 @@ $(document).ready(function () {
                 yAxisID: 'current',
                 data: [],
                 fill: false,
-                order: 2
+                
 
             }],
         },

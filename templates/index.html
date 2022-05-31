@@ -7,11 +7,11 @@
     <table>
         <tr>
             <th>DATE</th>
-            <th>PV PRODUCED</th>
-            <th>PV CONSUMED</th>
-            <th>AC CONSUMED/</th>
-            <th>AVG CURRENT AC</th>
-            <th>AVG VOLTAGE AC</th>
+            <th>S/.</th>
+            <th>HOME KWH</th>
+            <th>AVG AMP AC</th>
+            <th>PV WH</th>
+            <th>AVG PV AMP</th>
 
         </tr>
         <tr id=sensor1></tr>
@@ -48,7 +48,7 @@
 
 
 {% block content2 %}
-<h1>PV CURRENT {{date_t}}</h1>
+<h1>AC Watt plotting {{date_t}}</h1>
 
 <div class="container">
     <div class="row">
@@ -70,7 +70,7 @@
 
 
 {% block content3 %}
-<h1>PANEL SOURCE {{date_t}}</h1>
+<h1>Panel Watt plotting {{date_t}}</h1>
 
 <div class="container">
     <div class="row">
@@ -94,7 +94,7 @@
 
 {% block content4 %}
 
-<h1>AC CONSUMPTION {{date_t}}</h1>
+<h1>AC KWH/day {{date_t}}</h1>
 
 <div class="container">
     <div class="row">

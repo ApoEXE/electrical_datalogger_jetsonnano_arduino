@@ -1,11 +1,11 @@
 
 $(document).ready(function () {
         const config = {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: [],
                 datasets: [{
-                    label: "Power AC W",
+                    label: "Power AC WH",
                     backgroundColor: 'rgb(255, 99, 132)',
                     borderColor: 'rgb(255, 99, 132)',
                     data: [],

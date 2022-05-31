@@ -364,7 +364,7 @@ def socket_loop():
             port = 12345
             try:    
                 s.bind(('127.0.0.1', port))
-                s.listen(1)
+                s.listen(2)
                 connected = True
             except Exception as e:
                 print("error binding")
