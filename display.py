@@ -197,8 +197,13 @@ def display_oled():
                 print("time elapsed")
                 start = end
                 try:
-                    if hour_counter >= 3600:
-                        conn2 = sqlite3.connect(db_result, check_same_thread=False)
+                    if hour_counter >= 7200:
+                        result_bkp="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
+                        cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
+                        returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
+                        print("databased backed")
+                        time.sleep(1)
+                        conn2 = sqlite3.connect(result_bkp, check_same_thread=False)
                         db2 = conn2.cursor()
                         date1=getDate(1)
                         sql_avg_minute ="select SUM(AC_POWER) from summary where date == ?"

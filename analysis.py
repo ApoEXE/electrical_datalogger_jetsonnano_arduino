@@ -40,6 +40,7 @@ reset2 = 0
 
 db_backup = "/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry_backup.db"
 db_result = "/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db"
+result_bkp="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
 avg_pv_power = 0.0
 avg_pv_current = 0.0
 avg_pv_voltage = 0.0
@@ -95,10 +96,18 @@ up_to_min = 59
 days    = 1
 enable_once=False
 
+counter = 0
+
 cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry_backup.db"
 returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
-print("databased backed")
+print("databased backed ac_telemetry")
 time.sleep(1)
+
+cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
+returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
+print("databased backed ac_result")
+time.sleep(1)
+
 def getDate(i):
         DAY = timedelta(i)
         local_tz = get_localzone()   # get local timezone
@@ -467,7 +476,17 @@ def sensorCurrentPV():
     return Response(generate_random_data(), mimetype='text/event-stream')
 
 def getParams(date_to_find):
-    conn2 = sqlite3.connect(db_result, check_same_thread=False)
+    global result_bkp,counter
+    if(counter>=60):
+        cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
+        returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
+        print("databased backed ac_result")
+        time.sleep(1)
+        counter = 0
+    else:
+        counter +=1
+    #print(counter)
+    conn2 = sqlite3.connect(result_bkp, check_same_thread=False)
     db2 = conn2.cursor()
     date1=getDate(date_to_find)
     sql_avg_minute ="select SUM(AC_POWER) from summary where date == ?"

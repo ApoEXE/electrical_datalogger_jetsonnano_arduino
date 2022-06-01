@@ -262,72 +262,76 @@ def gather_loop():
             
             #if(True):
             if(int(tmp.tm_hour)!=int(tmp2.tm_hour)):
-                try:
+                readonly=True
+                while readonly:
+                    try:
 
 
-                    print(f"new string_t2 {string_t2} and before {string_t1} date {d1}")
-                    sql_avg_minute ="select avg(power) from parameters where date == ? and time >= ? and time <= ?;"           
-                    db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
-                    rows= db.fetchall()#average power
-                    avg_ac_power_wh = [value[0] for value in rows]
-                    avg_ac_power_wh = round(avg_ac_power_wh[0],2)
-                    print(f"----------------------------------------------------AC POWER Wh on {string_t2}-{string_t1}: {avg_ac_power_wh}")
+                        print(f"new string_t2 {string_t2} and before {string_t1} date {d1}")
+                        sql_avg_minute ="select avg(power) from parameters where date == ? and time >= ? and time <= ?;"           
+                        db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
+                        rows= db.fetchall()#average power
+                        avg_ac_power_wh = [value[0] for value in rows]
+                        avg_ac_power_wh = round(avg_ac_power_wh[0],2)
+                        print(f"----------------------------------------------------AC POWER Wh on {string_t2}-{string_t1}: {avg_ac_power_wh}")
 
 
-                    sql_avg_minute ="select avg(voltage) from parameters where date == ? and time >= ? and time <= ?;"           
-                    db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
-                    rows= db.fetchall()#average power
-                    avg_ac_voltage = [value[0] for value in rows]
-                    avg_ac_voltage = round(avg_ac_voltage[0],2)
-                    print(f"----------------------------------------------------AC VOLTAGE on {string_t2}-{string_t1}: {avg_ac_voltage}")
+                        sql_avg_minute ="select avg(voltage) from parameters where date == ? and time >= ? and time <= ?;"           
+                        db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
+                        rows= db.fetchall()#average power
+                        avg_ac_voltage = [value[0] for value in rows]
+                        avg_ac_voltage = round(avg_ac_voltage[0],2)
+                        print(f"----------------------------------------------------AC VOLTAGE on {string_t2}-{string_t1}: {avg_ac_voltage}")
 
 
 
-                    sql_avg_minute ="select avg(current) from parameters where date == ? and time >= ? and time <= ?;"           
-                    db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
-                    rows= db.fetchall()#average power
-                    avg_ac_current = [value[0] for value in rows]
-                    avg_ac_current = round(avg_ac_current[0],2)
-                    print(f"----------------------------------------------------AC CURRENT Ah on {string_t2}-{string_t1}: {avg_ac_current}")
+                        sql_avg_minute ="select avg(current) from parameters where date == ? and time >= ? and time <= ?;"           
+                        db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
+                        rows= db.fetchall()#average power
+                        avg_ac_current = [value[0] for value in rows]
+                        avg_ac_current = round(avg_ac_current[0],2)
+                        print(f"----------------------------------------------------AC CURRENT Ah on {string_t2}-{string_t1}: {avg_ac_current}")
 
-                    sql_avg_minute ="select avg(PANEL_POWER) from parameters where date == ? and time >= ? and time <= ?;"           
-                    db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
-                    rows= db.fetchall()#average power
-                    avg_pv_power_produced = [value[0] for value in rows]
-                    avg_pv_power_produced = round(avg_pv_power_produced[0],2)*0.75
-                    print(f"----------------------------------------------------PV POWER PRODUCED Wh on {string_t2}-{string_t1}: {avg_pv_power_produced}")
-
-
-                    sql_avg_minute ="select avg(PANEL_CURRENT*PANEL_VOLTAGE) from parameters where date == ? and time >= ? and time <= ?;"           
-                    db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
-                    rows= db.fetchall()#average power
-                    avg_pv_power_consumed = [value[0] for value in rows]
-                    avg_pv_power_consumed = round(avg_pv_power_consumed[0],2)
-                    print(f"----------------------------------------------------PV POWER CONSUMED on {string_t2}-{string_t1}: {avg_pv_power_consumed}")
+                        sql_avg_minute ="select avg(PANEL_POWER) from parameters where date == ? and time >= ? and time <= ?;"           
+                        db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
+                        rows= db.fetchall()#average power
+                        avg_pv_power_produced = [value[0] for value in rows]
+                        avg_pv_power_produced = round(avg_pv_power_produced[0],2)*0.75
+                        print(f"----------------------------------------------------PV POWER PRODUCED Wh on {string_t2}-{string_t1}: {avg_pv_power_produced}")
 
 
-                    sql_avg_minute ="select avg(PANEL_CURRENT) from parameters where date == ? and time >= ? and time <= ?;"           
-                    db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
-                    rows= db.fetchall()#average power
-                    avg_pv_current = [value[0] for value in rows]
-                    avg_pv_current = round(avg_pv_current[0],2)
-                    print(f"----------------------------------------------------PV CURRENT on {string_t2}-{string_t1}: {avg_pv_current}")
+                        sql_avg_minute ="select avg(PANEL_CURRENT*PANEL_VOLTAGE) from parameters where date == ? and time >= ? and time <= ?;"           
+                        db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
+                        rows= db.fetchall()#average power
+                        avg_pv_power_consumed = [value[0] for value in rows]
+                        avg_pv_power_consumed = round(avg_pv_power_consumed[0],2)
+                        print(f"----------------------------------------------------PV POWER CONSUMED on {string_t2}-{string_t1}: {avg_pv_power_consumed}")
 
 
-                    sql_avg_minute ="select avg(PANEL_VOLTAGE) from parameters where date == ? and time >= ? and time <= ?;"           
-                    db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
-                    rows= db.fetchall()#average power
-                    avg_pv_voltage = [value[0] for value in rows]
-                    avg_pv_voltage = round(avg_pv_voltage[0],2)
-                    print(f"----------------------------------------------------AvgPV VOLTAGE Wh on {string_t2}-{string_t1}: {avg_pv_voltage}")
+                        sql_avg_minute ="select avg(PANEL_CURRENT) from parameters where date == ? and time >= ? and time <= ?;"           
+                        db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
+                        rows= db.fetchall()#average power
+                        avg_pv_current = [value[0] for value in rows]
+                        avg_pv_current = round(avg_pv_current[0],2)
+                        print(f"----------------------------------------------------PV CURRENT on {string_t2}-{string_t1}: {avg_pv_current}")
 
-                    conn2.execute("INSERT INTO summary (DATE,TIME,AC_VOLTAGE,AC_CURRENT,AC_POWER,PANEL_VOLTAGE,PANEL_CURRENT,PANEL_POWER,PANEL_LOAD) \
-                VALUES ( ?, ?, ?, ?, ?,?,?,? ,?)",(d1,string_t2,avg_ac_voltage,avg_ac_current,avg_ac_power_wh,avg_pv_voltage,avg_pv_current,avg_pv_power_produced,avg_pv_power_consumed))
-                    conn2.commit()
-                except Exception as e:
-                    print(f"error SQLITE summary")
-                    
-                    print(e)
+
+                        sql_avg_minute ="select avg(PANEL_VOLTAGE) from parameters where date == ? and time >= ? and time <= ?;"           
+                        db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
+                        rows= db.fetchall()#average power
+                        avg_pv_voltage = [value[0] for value in rows]
+                        avg_pv_voltage = round(avg_pv_voltage[0],2)
+                        print(f"----------------------------------------------------AvgPV VOLTAGE Wh on {string_t2}-{string_t1}: {avg_pv_voltage}")
+
+                        conn2.execute("INSERT INTO summary (DATE,TIME,AC_VOLTAGE,AC_CURRENT,AC_POWER,PANEL_VOLTAGE,PANEL_CURRENT,PANEL_POWER,PANEL_LOAD) \
+                    VALUES ( ?, ?, ?, ?, ?,?,?,? ,?)",(d1,string_t2,avg_ac_voltage,avg_ac_current,avg_ac_power_wh,avg_pv_voltage,avg_pv_current,avg_pv_power_produced,avg_pv_power_consumed))
+                        conn2.commit()
+                        readonly = False
+                    except Exception as e:
+                        print(f"error SQLITE summary")
+                        readonly = True
+                        print(e)
+                
                 hour_before= str(tmp.tm_hour)
                 last_date,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
             try:
