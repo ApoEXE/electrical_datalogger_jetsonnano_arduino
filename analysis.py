@@ -98,6 +98,8 @@ enable_once=False
 
 counter = 0
 
+enable_reading_bk=False
+
 cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry_backup.db"
 returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
 print("databased backed ac_telemetry")
@@ -302,29 +304,46 @@ def getPower_saved():
 #******************THREADSA
 
 def power_ac_loop():
+    global enable_reading_bk
     while True:
-        getPower()
+        enable_reading_bk = False
+        cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry_backup.db"
+        returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
+        print("databased backed ac_telemetry")
         time.sleep(5)
+        enable_reading_bk = True
+        getPower()
+        getPanel_current()
+        getPanel_voltage()
+        time.sleep(60)
 
 def power_solar_loop():
+    global enable_reading_bk
     while True:
-        getPanelPower()
-        time.sleep(5)
+        if enable_reading_bk:
+            getPanelPower()
+            time.sleep(60)
 
 def power_saved_solar_loop():
+    global enable_reading_bk
     while True:
-        getPower_saved()
-        time.sleep(5)
+        if enable_reading_bk:
+            getPower_saved()
+            time.sleep(60)
 
 def panel_current_loop():
+    global enable_reading_bk
     while True:
-        getPanel_current()
-        time.sleep(100)
+        if enable_reading_bk:
+            getPanel_current()
+            time.sleep(60)
 
 def panel_voltage_loop():
+    global enable_reading_bk
     while True:
-        getPanel_voltage()
-        time.sleep(5)
+        if enable_reading_bk:
+            getPanel_voltage()
+            time.sleep(60)
 
 current_pv_thread = Thread(target=getPanel_current)
 voltage_pv_thread = Thread(target=getPanel_voltage)
@@ -361,7 +380,7 @@ def sensorAC():
         with app.app_context(): 
             global reset,power_list,enable_server
             #print(f"enable server: {enable_server}")
-            if enable_server >=4:
+            if enable_server >=3:
                 m_date = getDate(0)
                 newdate =[]
                 newCurrent = []
@@ -409,7 +428,7 @@ def sensorVoltPV():
     def generate_random_data():
         with app.app_context(): 
             global voltage_list_panel,current_list_panel,reset2,enable_server
-            if enable_server >=4:
+            if enable_server >=3:
                 m_date = getDate(0)
                 newdate =[]
                 newCurrent = []
@@ -645,15 +664,15 @@ if __name__ == '__main__':
         #power_pv_thread.start()
         current_pv_thread.start()
         voltage_pv_thread.start()
-        solar_saved_thread.start()
+        #solar_saved_thread.start()
         power_ac_thread.join()
         #power_pv_thread.join()
         current_pv_thread.join()
         voltage_pv_thread.join()
-        solar_saved_thread.join()
+        #solar_saved_thread.join()
         #delta_time = round((time.time()-start)/60,2)
         #print(f"delta time: {delta_time} min")
-        #loop_power_ac_thread.start()
+        loop_power_ac_thread.start()
         #loop_power_solar_saved_thread.start()
         #loop_power_solar_thread.start()
         #loop_solar_current_thread.start()

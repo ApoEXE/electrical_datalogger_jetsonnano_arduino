@@ -65,11 +65,12 @@ $(document).ready(function () {
                 
                 config.data.labels.push(data.date[index]);
                 config.data.datasets[0].data.push(data.current[index]);
-                //console.log(data.date[index]);
+                //console.log(reset_value);
                 lineChart.update();
                 if(data.date.length>1){
                 reset_value=1;
                 }
+                //console.log(reset_value);
                 
             }
           }
