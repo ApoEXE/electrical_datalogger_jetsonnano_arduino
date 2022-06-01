@@ -16,12 +16,14 @@ import socket
 
 import signal
 
-
+import sqlite3
 
 from threading import Thread
-
+from datetime import datetime, timedelta
+from tzlocal import get_localzone # pip install tzlocal
 
 # DECLARATIONS
+db_result = "/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db"
 var_current_ac= ""
 var_volt_ac = ""
 var_date = ""
@@ -38,6 +40,19 @@ display_i2c = True
 
 
 line_before = []
+
+
+def getDate(i):
+        DAY = timedelta(i)
+        local_tz = get_localzone()   # get local timezone
+        now = datetime.now(local_tz) # get timezone-aware datetime object
+        day_ago = local_tz.normalize(now - DAY) # exactly 24 hours ago, time may differ
+        naive = now.replace(tzinfo=None) - DAY # same time
+        yesterday = local_tz.localize(naive, is_dst=None) # but elapsed hours may differ
+        date_yesterday,hour = str(yesterday).split(" ")
+        #print(date_yesterday)
+        return date_yesterday
+
 def socket_loop():
     global line_before,var_date,var_time,var_current_ac,var_volt_ac,reconnection,var_panel_volt,var_panel_curr,var_power_ac,var_panel_power
     while reconnection:
@@ -126,6 +141,9 @@ def display_oled():
         print("ready to display")
 
         start = time.time()
+        precio = 0.0
+        date1 = ''
+        hour_counter = 3600
         while displayup == True:
             
             
@@ -148,20 +166,30 @@ def display_oled():
 
                     # Write two lines of text.
                     
-                    
-                    
-
-                    
-                    
-            draw.text((x, top), "DATE: " + var_date      ,  font=font, fill=255)
-            draw.text((x, top+8), "TIME: " + var_time  ,  font=font, fill=255)
-            draw.text((x, top+16), "POWER: " +  var_power_ac + " W"  ,  font=font, fill=255)
-            draw.text((x, top+24), "AMP: " +  var_current_ac + " A" ,  font=font, fill=255)
-            draw.text((x, top+32), "PV (V): " +var_panel_volt ,  font=font, fill=255)
             named_tuple = time.localtime() # get struct_time
-            date,time_str=time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
-            draw.text((x, top+40), "PV (A): " +  var_panel_curr  , font=font, fill=255)
-            draw.text((x, top+48), date+"."+time_str  ,  font=font, fill=255)
+            date,time_str=time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")       
+                    
+            line1= var_date+"."+ var_time
+            line2= "POWER: " +  var_power_ac + " W"
+            line3 ="AMP: " +  var_current_ac + " A"
+            line4 = "PV (V): " +var_panel_volt
+            line5 ="PV (A): " +  var_panel_curr
+            line6 =date1
+            line7 = "kWh:"+str(precio)
+                    
+            draw.text((x, top),  line1    ,  font=font, fill=255)
+            
+            draw.text((x, top+8),line2  ,  font=font, fill=255)
+            
+            draw.text((x, top+16), line3 ,  font=font, fill=255)
+            
+            draw.text((x, top+24),line4  ,  font=font, fill=255)
+            
+            draw.text((x, top+32),line5 ,  font=font, fill=255)
+            
+            draw.text((x, top+40),line6   , font=font, fill=255)
+            
+            draw.text((x, top+48), line7  ,  font=font, fill=255)
             # Display image.
             disp.image(image)
             end = time.time()
@@ -169,6 +197,23 @@ def display_oled():
                 print("time elapsed")
                 start = end
                 try:
+                    if hour_counter >= 3600:
+                        conn2 = sqlite3.connect(db_result, check_same_thread=False)
+                        db2 = conn2.cursor()
+                        date1=getDate(1)
+                        sql_avg_minute ="select SUM(AC_POWER) from summary where date == ?"
+                        db2.execute(sql_avg_minute,(date1,)) 
+                        rows= db2.fetchall()#average power
+                        val = [value[0] for value in rows]
+                        if(val[0] !=None):
+                            avg_pv_power_ac = round(val[0],2)
+                        else:
+                            avg_pv_power_ac=0
+                        precio=round(avg_pv_power_ac/1000.00,2)
+                        hour_counter= 0
+                    else:
+                        hour_counter+=1
+                    #print(hour_counter)
                     time.sleep(0.2)  # Wait for device to actually settle down
                     disp.display()
                     time.sleep(0.2)  # Wait for device to actually settle down

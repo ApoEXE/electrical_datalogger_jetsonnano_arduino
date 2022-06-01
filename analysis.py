@@ -24,7 +24,8 @@ from threading import Thread
 from numpy import power
 
 import socket
-
+from datetime import datetime, timedelta
+from tzlocal import get_localzone # pip install tzlocal
 
 enable_server = 0
 power_list =[]
@@ -117,8 +118,7 @@ cur = conn.cursor()
 
 app = Flask(__name__)
 
-from datetime import datetime, timedelta
-from tzlocal import get_localzone # pip install tzlocal
+
 
 sql_lastrow = "SELECT * FROM parameters ORDER BY id DESC LIMIT 1;"
 
