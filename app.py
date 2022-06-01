@@ -119,16 +119,16 @@ def gather_data():
         #print(f"{turnOFF} {turnON} {time_hr}")
         if(time_hr>=turnON and time_hr < turnOFF):
             bus.write_byte_data(address, 0, 0x0C)#HIGH  TURN ON
-            print("TURN ON")
+            #print("TURN ON")
         elif(time_hr<turnON and time_hr >= time_midnight):
             bus.write_byte_data(address, 0, 0x0B)#LOW TURN OFF
-            print("TURN OFF")
+            #print("TURN OFF")
         else:# time_hr>=turnOFF
             bus.write_byte_data(address, 0, 0x0B)#LOW TURN OFF
-            print("TURN OFF")
+            #print("TURN OFF")
 
         #bus.write_byte_data(address, 0, 0x0B)
-        #time.sleep(0.2)  # Wait for device to actually settle down
+        time.sleep(0.2)  # Wait for device to actually settle down
         #VOLTAGE-----------
         ac_volt_dig = read[2]<<8 | read[3]
         #print(ac_volt_dig)
@@ -144,12 +144,16 @@ def gather_data():
         R1 = 40389.61
         R2 = 10000
         volt_in_panel = anaVolt_panel*(R1+R2)/R2
-        volt_in_panel = round(volt_in_panel+0.1,2)
+        if volt_in_panel <= 0.5:
+            volt_in_panel = 0
+        else:
+            volt_in_panel = round(volt_in_panel,2)
         #--reading from panel current
         ac_curr_dig_panel = read[4]<<8 | read[5]  
-        ac_curr_dig_panel = (ac_curr_dig_panel+0.5) * (4.47 / 1024.0)
+        #ac_curr_dig_panel = (ac_curr_dig_panel+0.5) * (4.47 / 1024.0)
         #print(f"voltage {ac_curr_dig_panel} current ", end="")
-        ac_curr_dig_panel = ((ac_curr_dig_panel)-2.22  )/0.066
+        #ac_curr_dig_panel = ((ac_curr_dig_panel)-2.22  )/0.066
+        ac_curr_dig_panel = ac_curr_dig_panel/1000.0
         ac_curr_dig_panel = round(ac_curr_dig_panel,2)
         #print(ac_curr_dig_panel)
 
@@ -209,7 +213,9 @@ def gather_data():
 
             m_panel_current = str(round(panel_current_avg,2))
             m_panel_volt = str(round(panel_voltage_avg,2))
-            panel_power = panel_voltage_avg*100/22.5 #regla de tres para llegar a los vatios
+            
+            #panel_power = panel_voltage_avg*100/22.5 #regla de tres para llegar a los vatios
+            panel_power = 0
             m_panel_power = str(round(panel_power,2))
 
             redifine_current = 0
@@ -250,7 +256,7 @@ def gather_loop():
                 string_t2 = "23:59:00"
                 d1 = last_date            
       
-            print(f"{string_t2}  vs {string_t1}")
+            #print(f"{string_t2}  vs {string_t1}")
        
            
             
@@ -330,7 +336,7 @@ def gather_loop():
                 print(d1,end=" ")
                 print(d2,end=" ")
                 print(f"panel Volt: {m_panel_volt }V",end=" ")
-                print(f"panel Watts: {m_panel_power }W",end=" ")
+                print(f"panel Watts: {float(m_panel_volt)*float(m_panel_current) }W",end=" ")
                 print(f"panel Amp: {m_panel_current }A")
                 print(d1,end=" ")
                 print(d2,end=" ")

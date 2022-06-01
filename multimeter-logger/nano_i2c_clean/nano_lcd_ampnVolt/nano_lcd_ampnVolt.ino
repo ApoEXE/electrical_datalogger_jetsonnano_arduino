@@ -13,8 +13,8 @@
 
 #include <Wire.h>
 
-ACS712 ACS(A0, 4.47, 1023, 66);
-ACS712 ACS_2(A2, 4.47, 1023, 66);
+ACS712 ACS(A0, 5.1, 1023, 66);
+ACS712 ACS_2(A2, 5.1, 1023, 66);
 byte cmd;
 
 //digital read
@@ -61,7 +61,8 @@ void loop()
 
     dig_mA += ACS.mA_AC(60);
 
-    dig_mA_2 +=analogRead(A2); //currenct DC
+    //dig_mA_2 +=analogRead(A2); //currenct DC
+    dig_mA_2 +=ACS_2.mA_DC(); //currenct DC
   }
 
   ac_curr_dig = (dig_mA / sample);
@@ -70,11 +71,11 @@ void loop()
 
   //testing Dc current other way
   
-  float voltage_dc_panel =(analogRead(A2)+0.5) * (4.47 / 1024.0);
-  Serial.print("voltage ACS panel");
-  Serial.println(voltage_dc_panel);
-  float dc_v_acs=((voltage_dc_panel)-2.22  )/0.066;
-  Serial.print("Current ACS Panel");
+  //float voltage_dc_panel =(analogRead(A2)+0.5) * (4.47 / 1024.0);
+  //Serial.print("voltage ACS panel");
+  //Serial.println(voltage_dc_panel);
+  float dc_v_acs=(ac_curr_dig_2  )/1000;
+  Serial.print("Current ACS_2 Panel");
   Serial.println(dc_v_acs);
 
   //
