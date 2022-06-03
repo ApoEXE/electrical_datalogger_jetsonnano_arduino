@@ -28,6 +28,9 @@ from datetime import datetime, timedelta
 from tzlocal import get_localzone # pip install tzlocal
 
 enable_server = 0
+date_power_ac_list =[]
+date_volt_pv_list =[]
+date_amp_pv_list =[]
 power_list =[]
 power_list_panel=[]
 voltage_list_panel=[]
@@ -137,27 +140,25 @@ sql_lastrow = "SELECT * FROM parameters ORDER BY id DESC LIMIT 1;"
 
 
 def getPanel_voltage():
-    global db_backup,voltage_list_panel,enable_server,up_to_hour,up_to_min
+    global result_bkp,voltage_list_panel,enable_server,date_volt_pv_list
     voltage_list_panel = []
+    date_volt_pv_list = []
+
+
+    conn = sqlite3.connect(result_bkp, check_same_thread=False)
+    db = conn.cursor()
+    print("getting PV VOLT AVG list")
+    
     date_find =getDate(0)
 
-    conn = sqlite3.connect(db_backup, check_same_thread=False)
-    db = conn.cursor()
-    print("getting PV Volt list")
-    for hour in range(up_to_hour):
-        #for min in range(up_to_min):
-            #t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
-            #t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
-            t1 = dt.datetime.strptime(str(hour)+":00:00", '%H:%M:%S').time()
-            t2 = dt.datetime.strptime(str(hour)+":59:00", '%H:%M:%S').time()
-            sql_avg_minute ="select avg(PANEL_VOLTAGE) from parameters where date == ? and time >= ? and time <= ?;"
-            db.execute(sql_avg_minute,(date_find,str(t1),str(t2)))
-            rows= db.fetchall()#average power
-            for sl in rows:
-                if(sl[0]!=None):
-                    power_raw=[round(sl[0],2)]
-                    voltage_list_panel.append((date_find+" "+str(t2),power_raw[0]))
+    sql_avg_minute ="select TIME,PANEL_VOLTAGE from summary where date == ?;"        
+    db.execute(sql_avg_minute,(date_find,))
+          
+    rows= db.fetchall()#average power
+    date_volt_pv_list = [date_find+"_"+sl[0] for sl in rows]
+    voltage_list_panel = [sl[1] for sl in rows]
             
+
 
     print("done with PV Volt list")
     enable_server +=1 
@@ -166,97 +167,49 @@ def getPanel_voltage():
 
 
 def getPanel_current():
-    global db_backup,current_list_panel,enable_server,up_to_hour,up_to_min
+    global result_bkp,current_list_panel,enable_server,date_amp_pv_list
+
     current_list_panel = []
+    date_amp_pv_list = []
+
+
+    conn = sqlite3.connect(result_bkp, check_same_thread=False)
+    db = conn.cursor()
+    print("getting PV CURRENT AVG list")
+    
     date_find =getDate(0)
 
-    conn = sqlite3.connect(db_backup, check_same_thread=False)
-    db = conn.cursor()
-    print("getting PanelCurrent list")
-    for hour in range(up_to_hour):
-        #for min in range(up_to_min):
-            #t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
-            #t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
-            t1 = dt.datetime.strptime(str(hour)+":00:00", '%H:%M:%S').time()
-            t2 = dt.datetime.strptime(str(hour)+":59:00", '%H:%M:%S').time()
-            sql_avg_minute ="select avg(PANEL_CURRENT) from parameters where date == ? and time >= ? and time <= ?;"
-            db.execute(sql_avg_minute,(date_find,str(t1),str(t2)))
-            rows= db.fetchall()#average power
-            for sl in rows:
-                if(sl[0]!=None):
-                    power_raw=[round(sl[0],2)]
-                    current_list_panel.append((date_find+" "+str(t2),power_raw[0]))
+    sql_avg_minute ="select TIME,PANEL_CURRENT from summary where date == ?;"        
+    db.execute(sql_avg_minute,(date_find,))
+          
+    rows= db.fetchall()#average power
+    date_amp_pv_list = [date_find+"_"+sl[0] for sl in rows]
+    current_list_panel = [sl[1] for sl in rows]
             
 
     print("done with PV current list")
     enable_server +=1 
     return current_list_panel
 #*************************************** Solar Power produced
-def getPanelPower():
-    global db_backup,power_list_panel,enable_server,up_to_hour,up_to_min,total_day_solar_power_produced,days
-    power_list_panel = []
-    total_day_solar_power_produced=[]
-    
 
-    conn = sqlite3.connect(db_backup, check_same_thread=False)
-    db = conn.cursor()
-    print("getting Panel Power WH list")
-    
-    for i in range(days):
-        date_find =getDate(i)
-        temp = 0.0
-        for hour in range(up_to_hour):
-            #t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
-            #t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
-                        
-            t1 = dt.datetime.strptime(str(hour)+":00:00", '%H:%M:%S').time()
-            t2 = dt.datetime.strptime(str(hour)+":59:00", '%H:%M:%S').time()
-            sql_avg_minute ="select avg(PANEL_POWER) from parameters where date == ? and time >= ? and time <= ? ;"
-            db.execute(sql_avg_minute,(date_find,str(t1),str(t2)))
-            rows= db.fetchall()#average power
-            #print(f"total Panel records {len(rows)-1} time {t2}")
-            for sl in rows:
-                if(sl[0]!=None):
-                    power_raw=[round(sl[0],2)]
-                    temp +=round(power_raw[0],2)*0.75
-                    power_list_panel.append((date_find+" "+str(t2),round(power_raw[0],2)*0.75))
-        total_day_solar_power_produced.append((date_find,temp))   
-
-
-    print("done with Panel list")
-    enable_server +=1 
-    return power_list_panel
-#************************************** AC Power
 def getPower():
-    global db_backup,power_list,enable_server,up_to_hour,total_day_ac_power_used,days
+    global power_list,date_power_ac_list,enable_server,result_bkp
     power_list = []
-    total_day_ac_power_used=[]
+    date_power_ac_list = []
 
-    conn = sqlite3.connect(db_backup, check_same_thread=False)
+
+    conn = sqlite3.connect(result_bkp, check_same_thread=False)
     db = conn.cursor()
     print("getting power WH list")
-    for i in range(days):
-        date_find =getDate(i)
-        temp = 0.0
-        for hour in range(up_to_hour):
-            
-            
-            #t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
-            #t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
-            t1 = dt.datetime.strptime(str(hour)+":00:00", '%H:%M:%S').time()
-            t2 = dt.datetime.strptime(str(hour)+":59:00", '%H:%M:%S').time()
-            sql_avg_minute ="select avg(power) from parameters where date == ? and time >= ? and time <= ?;"        
-            db.execute(sql_avg_minute,(date_find,str(t1),str(t2)))
-          
-            rows= db.fetchall()#average power
     
-            for sl in rows:
-                if(sl[0]!=None):
-                    power_raw=[round(sl[0],2)]
-                    temp +=round(power_raw[0],2)
-                    power_list.append((date_find+" "+str(t2),round(power_raw[0],2)))
-        total_day_ac_power_used.append((date_find,round(temp,2)))    
-      
+    date_find =getDate(0)
+
+    sql_avg_minute ="select TIME,AC_POWER from summary where date == ?;"        
+    db.execute(sql_avg_minute,(date_find,))
+          
+    rows= db.fetchall()#average power
+    date_power_ac_list = [date_find+"_"+sl[0] for sl in rows]
+    power_list = [sl[1] for sl in rows]
 
     print("done with AC Power list")
     enable_server +=1 
@@ -306,68 +259,24 @@ def getPower_saved():
 def power_ac_loop():
     global enable_reading_bk
     while True:
-        enable_reading_bk = False
-        cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry_backup.db"
-        returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
-        print("databased backed ac_telemetry")
-        time.sleep(5)
-        enable_reading_bk = True
         getPower()
         getPanel_current()
         getPanel_voltage()
         time.sleep(60)
 
-def power_solar_loop():
-    global enable_reading_bk
-    while True:
-        if enable_reading_bk:
-            getPanelPower()
-            time.sleep(60)
-
-def power_saved_solar_loop():
-    global enable_reading_bk
-    while True:
-        if enable_reading_bk:
-            getPower_saved()
-            time.sleep(60)
-
-def panel_current_loop():
-    global enable_reading_bk
-    while True:
-        if enable_reading_bk:
-            getPanel_current()
-            time.sleep(60)
-
-def panel_voltage_loop():
-    global enable_reading_bk
-    while True:
-        if enable_reading_bk:
-            getPanel_voltage()
-            time.sleep(60)
-
-current_pv_thread = Thread(target=getPanel_current)
-voltage_pv_thread = Thread(target=getPanel_voltage)
-
-power_ac_thread = Thread(target=getPower)
-power_pv_thread = Thread(target=getPanelPower)
-solar_saved_thread = Thread(target=getPower_saved)
 
 
-loop_power_ac_thread = Thread(target=power_ac_loop)
-loop_power_solar_thread = Thread(target=power_solar_loop)
-loop_power_solar_saved_thread = Thread(target=power_saved_solar_loop)
-loop_solar_current_thread = Thread(target=getPanel_current)
-loop_solar_voltage_thread = Thread(target=getPanel_voltage)
+
+power_ac_thread = Thread(target=power_ac_loop)
+
+
+
+
 
 
 @app.route('/')
 def index():
-    global power_ac_thread,power_pv_thread,current_pv_thread,voltage_pv_thread,enable_server,power_list,solar_saved_thread
-    #power_ac_thread.start()
-    #power_pv_thread.start()
-    #current_pv_thread.start()
-    #voltage_pv_thread.start()
-    #solar_saved_thread.start()
+
 
     return render_template('index.html', title='Sensor1',date_t=getDate(0),date_y=getDate(1), max=30)
 
@@ -378,25 +287,11 @@ def sensorAC():
     
     def generate_random_data():
         with app.app_context(): 
-            global reset,power_list,enable_server
+            global reset,power_list,date_power_ac_list,enable_server
             #print(f"enable server: {enable_server}")
             if enable_server >=3:
                 m_date = getDate(0)
-                newdate =[]
-                newCurrent = []
-                #print("calling _sensor1 power ac")
-            
-                date_val = ""
-                if(reset==0):
-                    for value in power_list:
-                        date_val,hour_val = value[0].split(" ")
-                        if(date_val==m_date):
-                            newdate.append(value[0])
-                            newCurrent.append(value[1])
-                    #print(f"total records {len(power_list)-1}")
-
-
-                json_data = json.dumps({'date': newdate, 'current': newCurrent, 'reset':reset, 'date_analisys':m_date}, default=str)
+                json_data = json.dumps({'date': date_power_ac_list, 'current': power_list, 'reset':reset, 'date_analisys':m_date}, default=str)
                 yield f"data:{json_data}\n\n"
             
             time.sleep(1)
@@ -427,23 +322,10 @@ def sensorVoltPV():
     
     def generate_random_data():
         with app.app_context(): 
-            global voltage_list_panel,current_list_panel,reset2,enable_server
+            global voltage_list_panel,current_list_panel,reset2,enable_server,date_amp_pv_list
             if enable_server >=3:
                 m_date = getDate(0)
-                newdate =[]
-                newCurrent = []
-                newVoltage = []
-                #print("calling _sensor3 voltage current panel")
-                if(reset2==0):
-                                   
-                    for value in voltage_list_panel:
-                        date_val,hour_val = value[0].split(" ")
-                        if(date_val==m_date):
-                            newdate.append(value[0])
-                            newCurrent = [current[1] for current in current_list_panel]
-                            newVoltage = [voltage[1] for voltage in voltage_list_panel]
-                    #print(f"total records {len(power_list_panel)-1}")
-                json_data = json.dumps({'date_panel': newdate, 'var_panel_current': newCurrent,'var_panel_volt':newVoltage, 'reset2':reset2,'date_analisys_2':m_date}, default=str)
+                json_data = json.dumps({'date_panel': date_amp_pv_list, 'var_panel_current':current_list_panel,'var_panel_volt':voltage_list_panel, 'reset2':reset2,'date_analisys_2':m_date}, default=str)
                 yield f"data:{json_data}\n\n"
             
             time.sleep(1)
@@ -661,22 +543,6 @@ if __name__ == '__main__':
     start = time.time()
     try:
         power_ac_thread.start()
-        #power_pv_thread.start()
-        current_pv_thread.start()
-        voltage_pv_thread.start()
-        #solar_saved_thread.start()
-        power_ac_thread.join()
-        #power_pv_thread.join()
-        current_pv_thread.join()
-        voltage_pv_thread.join()
-        #solar_saved_thread.join()
-        #delta_time = round((time.time()-start)/60,2)
-        #print(f"delta time: {delta_time} min")
-        loop_power_ac_thread.start()
-        #loop_power_solar_saved_thread.start()
-        #loop_power_solar_thread.start()
-        #loop_solar_current_thread.start()
-        #loop_solar_voltage_thread.start()
     except Exception as e:
         print("Cannot restart thread")
         print(e)

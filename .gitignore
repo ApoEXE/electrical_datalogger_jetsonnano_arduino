@@ -6,3 +6,4 @@ ac_telemetry.db
 ac_telemetry3.sqbpro
 ac_telemetry_backup.db
 ac_telemetry*
+*.db
