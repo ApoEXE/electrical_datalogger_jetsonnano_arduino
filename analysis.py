@@ -147,7 +147,7 @@ def getPanel_voltage():
 
     conn = sqlite3.connect(result_bkp, check_same_thread=False)
     db = conn.cursor()
-    print("getting PV VOLT AVG list")
+    #print("getting PV VOLT AVG list")
     
     date_find =getDate(0)
 
@@ -160,7 +160,7 @@ def getPanel_voltage():
             
 
 
-    print("done with PV Volt list")
+    #print("done with PV Volt list")
     enable_server +=1 
     return voltage_list_panel
 
@@ -175,7 +175,7 @@ def getPanel_current():
 
     conn = sqlite3.connect(result_bkp, check_same_thread=False)
     db = conn.cursor()
-    print("getting PV CURRENT AVG list")
+    #print("getting PV CURRENT AVG list")
     
     date_find =getDate(0)
 
@@ -187,7 +187,7 @@ def getPanel_current():
     current_list_panel = [sl[1] for sl in rows]
             
 
-    print("done with PV current list")
+    #print("done with PV current list")
     enable_server +=1 
     return current_list_panel
 #*************************************** Solar Power produced
@@ -200,7 +200,7 @@ def getPower():
 
     conn = sqlite3.connect(result_bkp, check_same_thread=False)
     db = conn.cursor()
-    print("getting power WH list")
+    #print("getting power WH list")
     
     date_find =getDate(0)
 
@@ -211,7 +211,7 @@ def getPower():
     date_power_ac_list = [date_find+"_"+sl[0] for sl in rows]
     power_list = [sl[1] for sl in rows]
 
-    print("done with AC Power list")
+    #print("done with AC Power list")
     enable_server +=1 
     return power_list
 
@@ -223,7 +223,7 @@ def getPower_saved():
 
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
-    print("getting Solar power WH saved list")
+    #print("getting Solar power WH saved list")
     for i in range(days):
         
         date_find =getDate(i)
@@ -249,7 +249,7 @@ def getPower_saved():
                     solar_power_saved_list.append((date_find+" "+str(t2),round(power_raw[0],2)))
         total_day_solar_power_used.append((date_find,temp))        
 
-    print("done with Solar Power saved list")
+    #print("done with Solar Power saved list")
     enable_server +=1 
     return solar_power_saved_list
 
@@ -360,7 +360,7 @@ def sensorCurrentPV():
                             var_panel_curr = line[6]
                             var_panel_power = line[7]
                             if(line_before!=line):
-                                print(line)
+                                #print(line)
                                 line_before = line
                             string_date = var_date +"-"+var_time
                             pv_date = string_date
@@ -370,7 +370,7 @@ def sensorCurrentPV():
                             json_data = json.dumps({'date_ac_power': string_date, 'ac_power': var_power_ac}, default=str)
                             yield f"data:{json_data}\n\n"
                 except Exception as e:
-                    print("Connection refused")
+                    #print("Connection refused")
                     print(e)
             time.sleep(1)
 
@@ -540,6 +540,7 @@ def extractData():
 
 
 if __name__ == '__main__':
+    print("version 1.0.1")
     start = time.time()
     try:
         power_ac_thread.start()

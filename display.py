@@ -75,11 +75,11 @@ def socket_loop():
                         var_panel_curr = line[6]
                         var_panel_power = line[7]
                         if(line_before!=line):
-                            print(line)
+                            #print(line)
                             line_before = line
                 time.sleep(1)
             except Exception as e:
-                print("Connection refused")
+                #print("Connection refused")
                 print(e)
     print("Exit socket_reconnection")
 
@@ -112,7 +112,7 @@ def display_oled():
             disp.display()
             displayup = True
         except Exception as e:
-                print(f"error I2C display")
+                #print(f"error I2C display")
                 print(e)
                 displayup = False
         # Create blank image for drawing.
@@ -138,7 +138,6 @@ def display_oled():
         # Load default font.
         font = ImageFont.load_default()
 
-        print("ready to display")
 
         start = time.time()
         precio = 0.0
@@ -194,14 +193,14 @@ def display_oled():
             disp.image(image)
             end = time.time()
             if(end-start >1):
-                print("time elapsed")
+                #print("time elapsed")
                 start = end
                 try:
                     if hour_counter >= 7200:
                         result_bkp="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
                         cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
                         returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
-                        print("databased backed")
+                        #print("databased backed")
                         time.sleep(1)
                         conn2 = sqlite3.connect(result_bkp, check_same_thread=False)
                         db2 = conn2.cursor()
@@ -232,6 +231,6 @@ def display_oled():
 
 
 if __name__ == '__main__':
-   
+    print("version 1.0.1")
     socket_thread.start()
     display_oled()

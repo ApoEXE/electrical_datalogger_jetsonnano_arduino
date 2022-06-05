@@ -109,8 +109,8 @@ def gather_data():
         time.sleep(0.2)  # Wait for device to actually settle down
         named_tuple = time.localtime() # get struct_time
         date_str,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
-        time_turnon ='06:30:00'
-        time_turnoff='23:00:00'
+        time_turnon ='09:00:00'
+        time_turnoff='17:30:00'
         time_midnight='00:00:00'
         turnON = time.strptime(time_turnon, "%H:%M:%S")
         turnOFF = time.strptime(time_turnoff, "%H:%M:%S")
@@ -150,10 +150,17 @@ def gather_data():
             volt_in_panel = round(volt_in_panel,2)
         #--reading from panel current
         ac_curr_dig_panel = read[4]<<8 | read[5]  
-        #ac_curr_dig_panel = (ac_curr_dig_panel+0.5) * (4.47 / 1024.0)
+        ac_curr_dig_panel = (ac_curr_dig_panel+0.5) * (4.47 / 1024.0)
         #print(f"voltage {ac_curr_dig_panel} current ", end="")
-        #ac_curr_dig_panel = ((ac_curr_dig_panel)-2.22  )/0.066
-        ac_curr_dig_panel = ac_curr_dig_panel/1000.0
+        ac_curr_dig_panel = ((ac_curr_dig_panel)-2.22  )/0.066
+
+
+        if ac_curr_dig_panel > 0.3:
+            ac_curr_dig_panel=ac_curr_dig_panel+0.21
+        
+        if volt_in_panel < 1:
+            ac_curr_dig_panel = 0
+        #ac_curr_dig_panel = ac_curr_dig_panel/1000.0
         ac_curr_dig_panel = round(ac_curr_dig_panel,2)
         #print(ac_curr_dig_panel)
 
@@ -169,7 +176,7 @@ def gather_data():
             samples_panel +=1
         
     except Exception as e:
-        print(f"ERROR gather 0x20 i2c disconnection")
+        #print(f"ERROR gather 0x20 i2c disconnection")
         print(e)
         volt_ac = 9999
         ac_curr = 9999
@@ -337,31 +344,31 @@ def gather_loop():
             try:
                 conn.commit()
 
-                print(d1,end=" ")
-                print(d2,end=" ")
-                print(f"panel Volt: {m_panel_volt }V",end=" ")
-                print(f"panel Watts: {float(m_panel_volt)*float(m_panel_current) }W",end=" ")
-                print(f"panel Amp: {m_panel_current }A")
-                print(d1,end=" ")
-                print(d2,end=" ")
-                print('AC Voltage in ',end="")
+                #print(d1,end=" ")
+                #print(d2,end=" ")
+                #print(f"panel Volt: {m_panel_volt }V",end=" ")
+                #print(f"panel Watts: {round(float(m_panel_volt)*float(m_panel_current),2) }W",end=" ")
+                #print(f"panel Amp: {m_panel_current }A")
+                #print(d1,end=" ")
+                #print(d2,end=" ")
+                #print('AC Voltage in ',end="")
 
-                print(var_volt_ac,end="")
+                #print(var_volt_ac,end="")
 
-                print(' V',end="")
+                #print(' V',end="")
 
-                print(' AC Current in ',end="")
-                print(var_current_ac,end="")
+                #print(' AC Current in ',end="")
+                #print(var_current_ac,end="")
     
-                print(' A  ', end='')
-                print(' AC POWER ',end="")
-                print(POWER,end="")
+                #print(' A  ', end='')
+                #print(' AC POWER ',end="")
+                #print(POWER,end="")
     
-                print(' W ')
+                #print(' W ')
 
-                time.sleep(0.2)
+                #time.sleep(0.2)
             except Exception as e:
-                print(f"error SQLITE")
+                #print(f"error SQLITE")
                 print(e)
     conn.close()
     print("Gather thread stopped")
@@ -383,7 +390,7 @@ def socket_loop():
                 time.sleep(1)
             while connected:
                 c, addr = s.accept()
-                print (f"Socket Up and running with a connection from {addr}")
+                #print (f"Socket Up and running with a connection from {addr}")
                             
                                 #old_time = d2
                                 #print("R<", end=" ")
@@ -397,7 +404,7 @@ def socket_loop():
                 try:
                     c.sendall(str_sendData.encode('utf-8'))
                 except Exception as e:
-                    print("Broken pipe error on display.py")
+                    #print("Broken pipe error on display.py")
                     print(e)
                     time.sleep(1)
                     connected = False
@@ -437,7 +444,7 @@ signal.signal(signal.SIGINT, stop)
 
 
 if __name__ == '__main__':
-   
+    print("version 1.0.1")
     gather_thread.start()
     socket_thread.start()
 
