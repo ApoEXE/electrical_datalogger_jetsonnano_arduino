@@ -110,7 +110,7 @@ def gather_data():
         named_tuple = time.localtime() # get struct_time
         date_str,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
         time_turnon ='09:00:00'
-        time_turnoff='17:30:00'
+        time_turnoff='17:00:00'
         time_midnight='00:00:00'
         turnON = time.strptime(time_turnon, "%H:%M:%S")
         turnOFF = time.strptime(time_turnoff, "%H:%M:%S")
@@ -135,6 +135,8 @@ def gather_data():
         anaVolt = (ac_volt_dig+0.5)*(realvolt / 1024.0)
         volt_in = anaVolt*(1000+880000)/1000
         volt_ac = (volt_in/math.sqrt(2))+14
+        volt_ac = 224#take off later, damaged 220 circuit
+        #print(f"AC VOLT {volt_ac}")
         #current-----------
         ac_curr = read[0]<<8 | read[1]
         
@@ -165,15 +167,13 @@ def gather_data():
         #print(ac_curr_dig_panel)
 
         
-        if(volt_ac < 300 and volt_ac > 200):
-            redifine_current += ac_curr/1000.0
-            redifine_voltage +=volt_ac
-            samples +=1
+        redifine_current += ac_curr/1000.0
+        redifine_voltage +=volt_ac
+        samples +=1
         #print(f"volt_panel {volt_in_panel} cur_panel {ac_curr_dig_panel}")
-        if(volt_in_panel < 46 ):
-            redifine_panel_current += (ac_curr_dig_panel)
-            redifine_panel_voltage +=volt_in_panel
-            samples_panel +=1
+        redifine_panel_current += (ac_curr_dig_panel)
+        redifine_panel_voltage +=volt_in_panel
+        samples_panel +=1
         
     except Exception as e:
         #print(f"ERROR gather 0x20 i2c disconnection")
@@ -194,7 +194,7 @@ def gather_data():
     end = time.time()
     POWER = 0.0
     if(end-start >=1) :
-        #print(f"second {samples} samples_panel {samples_panel}")
+        #print(f"samples {samples} samples_panel {samples_panel}")
         start = end
         if(samples !=0):
             current_avg = round(redifine_current/samples,2)
@@ -208,11 +208,13 @@ def gather_data():
         else:
             panel_current_avg = 0
             panel_voltage_avg = 0
+
         if(samples != 0 and samples_panel !=0):
             m_volt_ac = str(voltage_avg)
             m_current_ac = str(current_avg)  
             named_tuple = time.localtime() # get struct_time
             date_str,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
+
             d1 = date_str
             d2 = time_hr
 
@@ -231,16 +233,19 @@ def gather_data():
             redifine_panel_voltage = 0
             redifine_panel_current = 0
             samples_panel = 0
-        
+  
     return [d1,d2,m_volt_ac,m_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power]
 
 def gather_loop():
     global db,conn,conn2,shutdown,start,var_volt_ac,var_current_ac,POWER,d1,d2,m_panel_volt,m_panel_current,m_panel_power,hour_before,last_date
-    print("Gathering DATA")
+    
     start = time.time()
+    print("Gathering DATA")
     while shutdown:
         [d1,d2,var_volt_ac,var_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power] = gather_data()
+
         if(d1!=""):
+            
             conn.execute("INSERT INTO parameters (DATE,TIME,VOLTAGE,CURRENT,POWER,PANEL_VOLTAGE,PANEL_CURRENT,PANEL_POWER) \
             VALUES ( ?, ?, ?, ?, ?,?,?,?)",(d1,d2,var_volt_ac,var_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power))
             
@@ -272,8 +277,6 @@ def gather_loop():
                 readonly=True
                 while readonly:
                     try:
-
-
                         print(f"new string_t2 {string_t2} and before {string_t1} date {d1}")
                         sql_avg_minute ="select avg(power) from parameters where date == ? and time >= ? and time <= ?;"           
                         db.execute(sql_avg_minute,(d1,string_t1,string_t2)) 
@@ -343,30 +346,31 @@ def gather_loop():
                 last_date,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
             try:
                 conn.commit()
+                
+                print(d1,end=" ")
+                print(d2,end=" ")
+                print(f"panel Volt: {m_panel_volt }V",end=" ")
+                print(f"panel Watts: {round(float(m_panel_volt)*float(m_panel_current),2) }W",end=" ")
+                print(f"panel Amp: {m_panel_current }A")
+                print(d1,end=" ")
+                print(d2,end=" ")
+                print('AC Voltage in ',end="")
 
-                #print(d1,end=" ")
-                #print(d2,end=" ")
-                #print(f"panel Volt: {m_panel_volt }V",end=" ")
-                #print(f"panel Watts: {round(float(m_panel_volt)*float(m_panel_current),2) }W",end=" ")
-                #print(f"panel Amp: {m_panel_current }A")
-                #print(d1,end=" ")
-                #print(d2,end=" ")
-                #print('AC Voltage in ',end="")
+                print(var_volt_ac,end="")
 
-                #print(var_volt_ac,end="")
+                print(' V',end="")
 
-                #print(' V',end="")
-
-                #print(' AC Current in ',end="")
-                #print(var_current_ac,end="")
+                print(' AC Current in ',end="")
+                print(var_current_ac,end="")
     
-                #print(' A  ', end='')
-                #print(' AC POWER ',end="")
-                #print(POWER,end="")
+                print(' A  ', end='')
+                print(' AC POWER ',end="")
+                print(POWER,end="")
     
-                #print(' W ')
+                print(' W ')
 
                 #time.sleep(0.2)
+                
             except Exception as e:
                 #print(f"error SQLITE")
                 print(e)

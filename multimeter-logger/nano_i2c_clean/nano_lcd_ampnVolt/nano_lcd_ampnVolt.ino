@@ -1,4 +1,4 @@
-
+// version 1.0.2
 // Arduino UNO has 5.0 volt with a max ADC value of 1023 steps
 // ACS712 5A  uses 185 mV per A
 // ACS712 20A uses 100 mV per A
@@ -71,12 +71,10 @@ void loop()
 
   //testing Dc current other way
   
-  //float voltage_dc_panel =(analogRead(A2)+0.5) * (4.47 / 1024.0);
-  //Serial.print("voltage ACS panel");
-  //Serial.println(voltage_dc_panel);
-  //float dc_v_acs=(ac_curr_dig_2  )/1000;
-  //Serial.print("Current ACS_2 Panel");
-  //Serial.println(dc_v_acs);
+  float voltage_dc_panel =(ac_curr_dig_2+0.5) * (5 / 1024.0);
+  float dc_v_acs= ((voltage_dc_panel)-2.25  )/0.066;
+  Serial.print("Current Panel ");
+  Serial.println(dc_v_acs);
 
   //
 
@@ -90,6 +88,21 @@ void loop()
   }
   ac_volt_dig = (dig_volt / sample);
   ac_volt_dig_2 = (dig_volt_2 / sample);
+
+  float ac_volt = (ac_volt_dig+0.5)*(5 / 1024.0);
+  ac_volt = ac_volt*(1000+880000)/1000;
+  ac_volt = (ac_volt/sqrt(2))+14;
+  Serial.print("Volt AC ");
+  Serial.println(ac_volt);
+
+  float dc_volt = (ac_volt_dig_2+0.5)*(5 / 1024.0);
+  float R1 = 40389.61;
+  float R2 = 10000;
+  dc_volt = dc_volt*(R1+R2)/R2;
+  Serial.print("Volt DC ");
+  Serial.println(dc_volt);
+
+
 
   cmd = Wire.read(); //read the received byte
   switch (cmd)
