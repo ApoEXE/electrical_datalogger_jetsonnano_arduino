@@ -59,6 +59,14 @@ hour_before = str(time_str.tm_hour)
 last_date = d1
 
 
+before_pv_volt = 0.0
+
+before_pv_curr = 0.0
+
+before_ac_volt = 0.0
+
+before_ac_curr = 0.0
+
 print(f"START at {time_hr} and hour_before: {hour_before}")
 
 
@@ -99,7 +107,7 @@ print ("Opened database  RESULTS successfully")
 db = conn.cursor()
 
 def gather_data():
-    global bus,redifine_voltage, redifine_current,samples,start,redifine_panel_current,redifine_panel_voltage,samples_panel,panel_power
+    global bus,redifine_voltage, redifine_current,samples,start,redifine_panel_current,redifine_panel_voltage,samples_panel,panel_power, before_ac_volt,before_ac_curr,before_pv_volt,before_pv_curr
     address = 0x20
     try:
 
@@ -210,22 +218,76 @@ def gather_data():
             panel_voltage_avg = 0
 
         if(samples != 0 and samples_panel !=0):
-            m_volt_ac = str(voltage_avg)
-            m_current_ac = str(current_avg)  
             named_tuple = time.localtime() # get struct_time
             date_str,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
 
             d1 = date_str
             d2 = time_hr
 
-            POWER = str(round(voltage_avg*current_avg,2))
+            #AC
+            if before_ac_curr==0:
+                before_ac_curr = current_avg 
+            if before_ac_volt==0:
+                before_ac_volt = voltage_avg
+            try:
+                percentage = (abs(voltage_avg-before_ac_volt)/before_ac_volt)*100
+            except:
+                percentage = 1            
+            if percentage<10: 
+                m_volt_ac = str(voltage_avg)
+                before_ac_volt = voltage_avg
+            else:
+                voltage_avg = 0
+                m_volt_ac = str(voltage_avg)
+            try:
+                percentage = (abs(current_avg-before_ac_curr)/before_ac_curr)*100
+            except:
+                percentage = 1
+            if percentage<10: 
+                m_current_ac = str(current_avg)  
+                before_ac_curr = current_avg
+            else:
+                current_avg = 0
+                m_current_ac = str(current_avg) 
 
-            m_panel_current = str(round(panel_current_avg,2))
-            m_panel_volt = str(round(panel_voltage_avg,2))
-            
-            #panel_power = panel_voltage_avg*100/22.5 #regla de tres para llegar a los vatios
-            panel_power = 0
-            m_panel_power = str(round(panel_power,2))
+            if current_avg !=0 or voltage_avg !=0:
+                POWER = str(round(voltage_avg*before_ac_curr,2))
+            else:
+                POWER = str(round(before_ac_volt*current_avg,2))
+
+            #DC 
+            if before_pv_curr==0:
+                before_pv_curr = panel_current_avg
+            if before_pv_volt==0:
+                before_pv_volt = panel_voltage_avg
+
+            try:
+                percentage = (abs(panel_voltage_avg-before_pv_volt)/before_pv_volt)*100
+            except:
+                percentage = 1
+            if percentage<10: 
+                m_panel_volt = str(round(panel_voltage_avg,2))
+                before_pv_volt = panel_voltage_avg
+            else:
+                panel_voltage_avg = 0
+                m_panel_volt = str(round(panel_voltage_avg,2))
+            try:
+                percentage = (abs(panel_current_avg-before_pv_curr)/before_pv_curr)*100
+            except:
+                percentage = 1           
+            if percentage<10: 
+                m_panel_current = str(panel_current_avg)  
+                before_pv_curr = panel_current_avg
+            else:
+                panel_current_avg = 0
+                m_panel_current = str(panel_current_avg) 
+
+            if panel_current_avg !=0 or panel_voltage_avg !=0:
+                panel_power = str(round(before_pv_volt*before_pv_curr,2))
+            else:
+                panel_power = str(round(panel_current_avg*panel_voltage_avg,2))
+
+            m_panel_power = panel_power
 
             redifine_current = 0
             redifine_voltage =0
@@ -340,6 +402,7 @@ def gather_loop():
                     except Exception as e:
                         print(f"error SQLITE summary")
                         readonly = True
+                        hour_before= str(tmp.tm_hour)
                         print(e)
                 
                 hour_before= str(tmp.tm_hour)
