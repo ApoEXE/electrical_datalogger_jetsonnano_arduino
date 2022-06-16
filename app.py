@@ -59,13 +59,13 @@ hour_before = str(time_str.tm_hour)
 last_date = d1
 
 
-before_pv_volt = 0.0
+before_pv_volt = 0.01
 
-before_pv_curr = 0.0
+before_pv_curr = 0.01
 
-before_ac_volt = 0.0
+before_ac_volt = 0.01
 
-before_ac_curr = 0.0
+before_ac_curr = 0.01
 
 print(f"START at {time_hr} and hour_before: {hour_before}")
 
@@ -211,8 +211,8 @@ def gather_data():
             current_avg = 0
             voltage_avg = 0
         if(samples_panel !=0):
-            panel_current_avg = redifine_panel_current/samples_panel
-            panel_voltage_avg = redifine_panel_voltage/samples_panel
+            panel_current_avg = round(redifine_panel_current/samples_panel,2)
+            panel_voltage_avg = round(redifine_panel_voltage/samples_panel,2)
         else:
             panel_current_avg = 0
             panel_voltage_avg = 0
@@ -225,67 +225,60 @@ def gather_data():
             d2 = time_hr
 
             #AC
-            if before_ac_curr==0:
-                before_ac_curr = current_avg 
-            if before_ac_volt==0:
-                before_ac_volt = voltage_avg
-            try:
-                percentage = (abs(voltage_avg-before_ac_volt)/before_ac_volt)*100
-            except:
-                percentage = 1            
-            if percentage<10: 
+
+
+            diff_ac = round(abs((voltage_avg-before_ac_volt)),2)
+
+            print(f"AC VOLT now {voltage_avg} before { before_ac_volt} diff ac {diff_ac }")           
+            if diff_ac<=400: 
                 m_volt_ac = str(voltage_avg)
                 before_ac_volt = voltage_avg
             else:
-                voltage_avg = 0
+                voltage_avg = before_ac_volt
                 m_volt_ac = str(voltage_avg)
-            try:
-                percentage = (abs(current_avg-before_ac_curr)/before_ac_curr)*100
-            except:
-                percentage = 1
-            if percentage<10: 
+
+            diff_ac = round(abs((current_avg-before_ac_curr)),2)
+            print(f"AC CURRENT now {current_avg } before {before_ac_curr} diff ac {diff_ac }")   
+            if diff_ac<=30: 
                 m_current_ac = str(current_avg)  
                 before_ac_curr = current_avg
             else:
-                current_avg = 0
+                current_avg = before_ac_curr
                 m_current_ac = str(current_avg) 
 
-            if current_avg !=0 or voltage_avg !=0:
-                POWER = str(round(voltage_avg*before_ac_curr,2))
+            if current_avg !=0 and voltage_avg !=0:
+                POWER = str(round(voltage_avg*current_avg,2))
             else:
-                POWER = str(round(before_ac_volt*current_avg,2))
+                POWER = str(round(before_ac_volt*before_ac_curr,2))
 
             #DC 
-            if before_pv_curr==0:
-                before_pv_curr = panel_current_avg
-            if before_pv_volt==0:
-                before_pv_volt = panel_voltage_avg
+        
 
-            try:
-                percentage = (abs(panel_voltage_avg-before_pv_volt)/before_pv_volt)*100
-            except:
-                percentage = 1
-            if percentage<10: 
+            diff = round(abs((panel_voltage_avg-before_pv_volt)),2)
+
+            print(f"panel VOLT now {panel_voltage_avg} before {before_pv_volt} diff {diff }")
+            if diff<=23: 
                 m_panel_volt = str(round(panel_voltage_avg,2))
                 before_pv_volt = panel_voltage_avg
             else:
-                panel_voltage_avg = 0
+                panel_voltage_avg = before_pv_volt
                 m_panel_volt = str(round(panel_voltage_avg,2))
-            try:
-                percentage = (abs(panel_current_avg-before_pv_curr)/before_pv_curr)*100
-            except:
-                percentage = 1           
-            if percentage<10: 
+            
+            diff = round(abs((panel_current_avg-before_pv_curr)),2)
+              
+            print(f"panel CURR now {panel_current_avg} before {before_pv_curr} diff  {diff}")         
+            if diff<=6: 
                 m_panel_current = str(panel_current_avg)  
                 before_pv_curr = panel_current_avg
             else:
-                panel_current_avg = 0
+                panel_current_avg = before_pv_curr 
                 m_panel_current = str(panel_current_avg) 
 
-            if panel_current_avg !=0 or panel_voltage_avg !=0:
-                panel_power = str(round(before_pv_volt*before_pv_curr,2))
-            else:
+            if panel_current_avg !=0 and panel_voltage_avg !=0:
                 panel_power = str(round(panel_current_avg*panel_voltage_avg,2))
+            else:
+                panel_power = str(round(before_pv_volt*before_pv_curr,2))
+                
 
             m_panel_power = panel_power
 
@@ -412,6 +405,7 @@ def gather_loop():
                 
                 print(d1,end=" ")
                 print(d2,end=" ")
+                
                 print(f"panel Volt: {m_panel_volt }V",end=" ")
                 print(f"panel Watts: {round(float(m_panel_volt)*float(m_panel_current),2) }W",end=" ")
                 print(f"panel Amp: {m_panel_current }A")
@@ -431,7 +425,7 @@ def gather_loop():
                 print(POWER,end="")
     
                 print(' W ')
-
+                
                 #time.sleep(0.2)
                 
             except Exception as e:
