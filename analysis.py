@@ -463,7 +463,7 @@ def getParams(date_to_find):
     else:
         avg_pv_voltage_ac = 0
     #print(f"AC Voltage on {date1} : {avg_pv_voltage_ac}")
-    return date1,avg_pv_power_ac,avg_pv_power_load,avg_pv_power,avg_pv_current,avg_pv_voltage,avg_pv_current_ac,avg_pv_voltage_ac,precio
+    return date1,round(avg_pv_power_ac/1000,2),avg_pv_power_load,avg_pv_power,avg_pv_current,avg_pv_voltage,avg_pv_current_ac,avg_pv_voltage_ac,precio
 
 @app.route("/extract_data", methods=['POST'])
 def extractData():
