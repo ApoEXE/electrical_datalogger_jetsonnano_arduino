@@ -53,12 +53,24 @@ $(document).ready(function () {
     const lineChart = new Chart(context, config);
 
     const source = new EventSource("/_sensor4");
-
+    reset_value_4 = 0;
     source.onmessage = function (event) {
-        const data = JSON.parse(event.data);
-
-        config.data.labels.push(data.date_ac_power);
-        config.data.datasets[0].data.push(data.ac_power);
+        const pythondata = JSON.parse(event.data);
+        if (reset_value_4 == 0) {
+            for (let index = 0; index < pythondata.date_ac_power.length; index++) {
+                config.data.labels.push(pythondata.date_ac_power[index]);
+                config.data.datasets[0].data.push(pythondata.ac_power[index]);
+                console.log(pythondata.ac_power);
+                
+            }
+            
+            if (pythondata.date_ac_power.length > 1) {
+                reset_value_4 = 1;
+            }
+        } else { //to push one by one real time
+            config.data.labels.push(pythondata.date_ac_power_sec);
+            config.data.datasets[0].data.push(pythondata.ac_power_sec);
+        }
         lineChart.update();
     }
 

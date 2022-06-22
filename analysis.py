@@ -40,7 +40,7 @@ solar_power_saved_list =[]
 report = []
 reset = 0
 reset2 = 0
-
+reset4 = 0
 db_backup = "/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry_backup.db"
 db_result = "/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db"
 result_bkp="/home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
@@ -87,7 +87,8 @@ avg_pv_voltage_ac5 = 0.0
 total_day_ac_power_used=[]
 total_day_solar_power_produced=[]
 total_day_solar_power_used=[]
-
+date_ac_tot=[]
+power_ac_tot=[]
 
 pv_voltage = 0.0
 pv_current = 0.0
@@ -253,6 +254,39 @@ def getPower_saved():
     enable_server +=1 
     return solar_power_saved_list
 
+#################################
+def getPower_min():
+    global db_backup
+    power_list = []
+    date_power_ac_list = []
+
+    date_find =getDate(0)  
+    conn = sqlite3.connect(db_backup, check_same_thread=False)
+    db = conn.cursor()
+    #print("getting power WH list")
+         
+    rows= db.fetchall()#average power
+
+    for hour in range(24):
+        for min in range(59):    
+            t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
+            t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
+
+            sql_avg_minute ="select avg(POWER) from parameters where date == ? and time >= ? and time <= ? ;"    
+            
+            db.execute(sql_avg_minute,(date_find,str(t1),str(t2)))
+          
+            rows= db.fetchall()#average power
+
+            #print(f"PANEL SAVED total Panel records {len(rows)-1} time {t2}")
+            for sl in rows:
+                if(sl[0]!=None):
+                    date_power_ac_list.append(date_find+"_"+str(t2))
+                    power_raw=[round(sl[0],2)]
+                    power_list.append(round(power_raw[0],2))
+                    #print(f"{date_power_ac_list[-1]} :::::  {power_list[-1]}")
+                
+    return date_power_ac_list,power_list
 
 #******************THREADSA
 
@@ -336,43 +370,54 @@ def sensorVoltPV():
 def sensorCurrentPV():
     
     def generate_random_data():
+        global reset4,date_ac_tot,power_ac_tot
+        if reset4==1:
+            with app.app_context():
+                global pv_voltage,pv_current,pv_enable,pv_date
+                
+                with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
+                    line_before = []
 
-        with app.app_context():
-            global pv_voltage,pv_current,pv_enable,pv_date
-             
-            with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
-                line_before = []
+                    try:
+                        s.connect(("127.0.0.1",12345))
+                        data = s.recv(4096)
+                        #if not data:
+                                #break
+                        data = data.decode('utf-8')
+                        line = eval(data)
+                        if(line[0]!=""):
+                                var_date= line[0]
+                                var_time=line[1]
+                                var_current_ac = line[3]
+                                var_power_ac = line[4]
+                                var_volt_ac = line[2]
+                                var_panel_volt = line[5]
+                                var_panel_curr = line[6]
+                                var_panel_power = line[7]
+                                if(line_before!=line):
+                                    #print(line)
+                                    line_before = line
+                                string_date = var_date +"-"+var_time
+                                pv_date = string_date
+                                pv_voltage = float(var_panel_volt)
+                                pv_current = float(var_panel_curr)
+                                pv_enable = True
+                                json_data = json.dumps({'date_ac_power': date_ac_tot, 'ac_power': power_ac_tot,'date_ac_power_sec': string_date, 'ac_power_sec': var_power_ac}, default=str)
+                                yield f"data:{json_data}\n\n"
+                    except Exception as e:
+                        #print("Connection refused")
+                        print(e)
+        
+        if reset4==0:
+            start = time.time()
+            print(f"Start: {start}")
+            date_ac_tot,power_ac_tot = getPower_min()
+            print(f"delta: {time.time()-start}")
+            reset4=1
+            #print(power_ac_tot)
 
-                try:
-                    s.connect(("127.0.0.1",12345))
-                    data = s.recv(4096)
-                    #if not data:
-                            #break
-                    data = data.decode('utf-8')
-                    line = eval(data)
-                    if(line[0]!=""):
-                            var_date= line[0]
-                            var_time=line[1]
-                            var_current_ac = line[3]
-                            var_power_ac = line[4]
-                            var_volt_ac = line[2]
-                            var_panel_volt = line[5]
-                            var_panel_curr = line[6]
-                            var_panel_power = line[7]
-                            if(line_before!=line):
-                                #print(line)
-                                line_before = line
-                            string_date = var_date +"-"+var_time
-                            pv_date = string_date
-                            pv_voltage = float(var_panel_volt)
-                            pv_current = float(var_panel_curr)
-                            pv_enable = True
-                            json_data = json.dumps({'date_ac_power': string_date, 'ac_power': var_power_ac}, default=str)
-                            yield f"data:{json_data}\n\n"
-                except Exception as e:
-                    #print("Connection refused")
-                    print(e)
-            time.sleep(1)
+        
+        time.sleep(1)
 
     return Response(generate_random_data(), mimetype='text/event-stream')
 
@@ -387,83 +432,92 @@ def getParams(date_to_find):
     else:
         counter +=1
     #print(counter)
-    conn2 = sqlite3.connect(result_bkp, check_same_thread=False)
-    db2 = conn2.cursor()
-    date1=getDate(date_to_find)
-    sql_avg_minute ="select SUM(AC_POWER) from summary where date == ?"
-    db2.execute(sql_avg_minute,(date1,)) 
-    rows= db2.fetchall()#average power
-    val = [value[0] for value in rows]
-    if(val[0] !=None):
-        avg_pv_power_ac = round(val[0],2)
-    else:
-        avg_pv_power_ac=0
-    precio=round(avg_pv_power_ac/1000.00,2)
-    #print(f"Power AC avg on {date1} : {precio}")
+    try:
+        conn2 = sqlite3.connect(result_bkp, check_same_thread=False)
+        db2 = conn2.cursor()
+        date1=getDate(date_to_find)
+        sql_avg_minute ="select SUM(AC_POWER) from summary where date == ?"
+        db2.execute(sql_avg_minute,(date1,)) 
+        rows= db2.fetchall()#average power
+        val = [value[0] for value in rows]
+        if(val[0] !=None):
+            avg_pv_power_ac = round(val[0],2)
+        else:
+            avg_pv_power_ac=0
+        precio=round(avg_pv_power_ac/1000.00,2)
+        #print(f"Power AC avg on {date1} : {precio}")
 
-    sql_avg_minute ="select SUM(PANEL_LOAD) from summary where date == ?"
+        sql_avg_minute ="select SUM(PANEL_LOAD) from summary where date == ?"
 
-    db2.execute(sql_avg_minute,(date1,)) 
-    rows= db2.fetchall()#average power
-    val = [value[0] for value in rows]
-    if(val[0] !=None):
-        avg_pv_power_load = round(val[0],2)
-    else:
-        avg_pv_power_load=0
-    #print(f"Power PV Load on {date1} : {avg_pv_power_load}")
+        db2.execute(sql_avg_minute,(date1,)) 
+        rows= db2.fetchall()#average power
+        val = [value[0] for value in rows]
+        if(val[0] !=None):
+            avg_pv_power_load = round(val[0],2)
+        else:
+            avg_pv_power_load=0
+        #print(f"Power PV Load on {date1} : {avg_pv_power_load}")
 
-    sql_avg_minute ="select SUM(PANEL_POWER) from summary where date == ?"
-    db2.execute(sql_avg_minute,(date1,)) 
-    rows= db2.fetchall()#average power
-    val = [value[0] for value in rows]
-    if(val[0] !=None):
-        avg_pv_power = round(val[0],2)
-    else:
-        avg_pv_power=0
-    #print(f"Power PV from voltage on {date_find} : {avg_pv_power}")
-
-
-    sql_avg_minute ="select AVG(PANEL_CURRENT) from summary where date == ?"
-    db2.execute(sql_avg_minute,(date1,)) 
-    rows= db2.fetchall()#average power
-    val = [value[0] for value in rows]
-    if(val[0] !=None):
-        avg_pv_current = round(val[0],2)
-    else:
-        avg_pv_current=0
-    #print(f"Current PV on {date_find} : {avg_pv_current}")
+        sql_avg_minute ="select SUM(PANEL_POWER) from summary where date == ?"
+        db2.execute(sql_avg_minute,(date1,)) 
+        rows= db2.fetchall()#average power
+        val = [value[0] for value in rows]
+        if(val[0] !=None):
+            avg_pv_power = round(val[0],2)
+        else:
+            avg_pv_power=0
+        #print(f"Power PV from voltage on {date_find} : {avg_pv_power}")
 
 
-    sql_avg_minute ="select AVG(PANEL_VOLTAGE) from summary where date == ?"
-    db2.execute(sql_avg_minute,(date1,)) 
-    rows= db2.fetchall()#average power
-    val = [value[0] for value in rows]
-    if(val[0] !=None):
-        avg_pv_voltage = round(val[0],2)
-    else:
-        avg_pv_voltage=0
-    #print(f"Voltage PV on {date_find} : {avg_pv_voltage}")
+        sql_avg_minute ="select AVG(PANEL_CURRENT) from summary where date == ?"
+        db2.execute(sql_avg_minute,(date1,)) 
+        rows= db2.fetchall()#average power
+        val = [value[0] for value in rows]
+        if(val[0] !=None):
+            avg_pv_current = round(val[0],2)
+        else:
+            avg_pv_current=0
+        #print(f"Current PV on {date_find} : {avg_pv_current}")
 
-    sql_avg_minute ="select AVG(AC_CURRENT) from summary where date == ?"
-    db2.execute(sql_avg_minute,(date1,)) 
-    rows= db2.fetchall()#average power
-    val = [value[0] for value in rows]
-    if(val[0] !=None):    
-        avg_pv_current_ac = round(val[0],2)
-    else:
-        avg_pv_current_ac=0
-    #print(f"AC Current on {date1} : {avg_pv_current_ac}")
 
-    sql_avg_minute ="select AVG(AC_VOLTAGE) from summary where date == ?"
-    db2.execute(sql_avg_minute,(date1,)) 
-    rows= db2.fetchall()#average power
-    val = [value[0] for value in rows]
-    if(val[0] !=None):   
-        avg_pv_voltage_ac = round(val[0],2)
-    else:
-        avg_pv_voltage_ac = 0
-    #print(f"AC Voltage on {date1} : {avg_pv_voltage_ac}")
-    return date1,round(avg_pv_power_ac/1000,2),avg_pv_power_load,avg_pv_power,avg_pv_current,avg_pv_voltage,avg_pv_current_ac,avg_pv_voltage_ac,precio
+        sql_avg_minute ="select AVG(PANEL_VOLTAGE) from summary where date == ?"
+        db2.execute(sql_avg_minute,(date1,)) 
+        rows= db2.fetchall()#average power
+        val = [value[0] for value in rows]
+        if(val[0] !=None):
+            avg_pv_voltage = round(val[0],2)
+        else:
+            avg_pv_voltage=0
+        #print(f"Voltage PV on {date_find} : {avg_pv_voltage}")
+
+        sql_avg_minute ="select AVG(AC_CURRENT) from summary where date == ?"
+        db2.execute(sql_avg_minute,(date1,)) 
+        rows= db2.fetchall()#average power
+        val = [value[0] for value in rows]
+        if(val[0] !=None):    
+            avg_pv_current_ac = round(val[0],2)
+        else:
+            avg_pv_current_ac=0
+        #print(f"AC Current on {date1} : {avg_pv_current_ac}")
+
+        sql_avg_minute ="select AVG(AC_VOLTAGE) from summary where date == ?"
+        db2.execute(sql_avg_minute,(date1,)) 
+        rows= db2.fetchall()#average power
+        val = [value[0] for value in rows]
+        if(val[0] !=None):   
+            avg_pv_voltage_ac = round(val[0],2)
+        else:
+            avg_pv_voltage_ac = 0
+        #print(f"AC Voltage on {date1} : {avg_pv_voltage_ac}")
+        return date1,round(avg_pv_power_ac/1000,2),avg_pv_power_load,avg_pv_power,avg_pv_current,avg_pv_voltage,avg_pv_current_ac,avg_pv_voltage_ac,precio
+    except Exception as e:
+        print(e)
+        cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
+        returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
+        print("databased backed ac_result")
+        time.sleep(1)
+
+    
 
 @app.route("/extract_data", methods=['POST'])
 def extractData():
@@ -540,7 +594,8 @@ def extractData():
 
 
 if __name__ == '__main__':
-    print("version 1.0.1")
+    print("version 1.0.4")
+     
     start = time.time()
     try:
         power_ac_thread.start()
