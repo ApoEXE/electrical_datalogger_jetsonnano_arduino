@@ -298,11 +298,18 @@ def power_ac_loop():
         getPanel_voltage()
         time.sleep(60)
 
-
+def power_detail_loop():
+    global  date_ac_tot,power_ac_tot,reset4   
+    while True:        
+        start = time.time()
+        date_ac_tot,power_ac_tot = getPower_min()
+        print(f"power detail delta: {time.time()-start}")
+        reset4 = 1
+        time.sleep(60)
 
 
 power_ac_thread = Thread(target=power_ac_loop)
-
+power_ac_detail_thread = Thread(target=power_detail_loop)
 
 
 
@@ -408,18 +415,11 @@ def sensorCurrentPV():
                         #print("Connection refused")
                         print(e)
         
-        if reset4==0:
-            start = time.time()
-            print(f"Start: {start}")
-            date_ac_tot,power_ac_tot = getPower_min()
-            print(f"delta: {time.time()-start}")
-            reset4=1
-            #print(power_ac_tot)
 
-        
         time.sleep(1)
 
     return Response(generate_random_data(), mimetype='text/event-stream')
+
 
 def getParams(date_to_find):
     global result_bkp,counter
@@ -590,7 +590,15 @@ def extractData():
                         
                         })
 
-
+@app.route('/reset4', methods=['POST'])
+def test():
+    output = request.get_json()
+    print(output) # This is the output that was stored in the JSON within the browser
+    print(type(output))
+    result = json.loads(output) #this converts the json output to a python dictionary
+    print(result) # Printing the new dictionary
+    print(type(result))#this shows the json converted as a python dictionary
+    return result
 
 
 if __name__ == '__main__':
@@ -599,6 +607,7 @@ if __name__ == '__main__':
     start = time.time()
     try:
         power_ac_thread.start()
+        power_ac_detail_thread.start()
     except Exception as e:
         print("Cannot restart thread")
         print(e)
