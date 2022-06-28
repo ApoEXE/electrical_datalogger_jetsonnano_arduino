@@ -160,8 +160,8 @@ def display_oled():
             SwapUsage = subprocess.check_output(cmd, shell = True )
             cmd = "df -h | awk '$NF==\"/\"{printf \"Disk: %d/%dGB %s\", $3,$2,$5}'"
             Disk = subprocess.check_output(cmd, shell = True )
-            cmd = "date"
-            Date = subprocess.check_output(cmd, shell = True )
+            cmd = "iwgetid"
+            wifi = subprocess.check_output(cmd, shell = True )
 
                     # Write two lines of text.
                     
@@ -173,7 +173,7 @@ def display_oled():
             line3 ="AMP: " +  var_current_ac + " A"
             line4 = "PV (V): " +var_panel_volt
             line5 ="PV (A): " +  var_panel_curr
-            line6 =date1
+            line6 =wifi
             line7 = "kWh:"+str(precio)
                     
             draw.text((x, top),  line1    ,  font=font, fill=255)

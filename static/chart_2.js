@@ -38,7 +38,6 @@ $(document).ready(function () {
                     }
                 }],
                 yAxes: [{
-
                     display: true,
                     scaleLabel: {
                         display: true,

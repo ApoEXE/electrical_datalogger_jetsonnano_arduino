@@ -54,27 +54,28 @@ $(document).ready(function () {
 
     const source = new EventSource("/_sensor4");
     reset_value_4 = 0;
-    const dict_values = {reset_value_4}
+    const dict_values = { reset_value_4 }
     source.onmessage = function (event) {
         const pythondata = JSON.parse(event.data);
         if (reset_value_4 == 0) {
             for (let index = 0; index < pythondata.date_ac_power.length; index++) {
                 config.data.labels.push(pythondata.date_ac_power[index]);
                 config.data.datasets[0].data.push(pythondata.ac_power[index]);
-                console.log(pythondata.ac_power);
-                
+                //console.log(pythondata.ac_power);
+
             }
-            
+
             if (pythondata.date_ac_power.length > 1) {
                 reset_value_4 = 1;
                 const s = JSON.stringify(dict_values); // Stringify converts a JavaScript object or value to a JSON string
-                console.log(s);
-                window.alert(s)
-        $.ajax({
-            url:"/reset4",
-            type:"POST",
-            contentType: "application/json",
-            data: JSON.stringify(s)});
+                //console.log(s);
+                //window.alert(s)
+                $.ajax({
+                    url: "/reset4",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(s)
+                });
 
             }
         } else { //to push one by one real time

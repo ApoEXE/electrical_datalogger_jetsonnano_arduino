@@ -111,7 +111,7 @@ time.sleep(1)
 
 cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
 returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
-print("databased backed ac_result")
+print("init databased backed ac_result")
 time.sleep(1)
 
 def getDate(i):
@@ -302,6 +302,7 @@ def power_detail_loop():
     global  date_ac_tot,power_ac_tot,reset4   
     while True:        
         start = time.time()
+        print(f"power detail reading")
         date_ac_tot,power_ac_tot = getPower_min()
         print(f"power detail delta: {time.time()-start}")
         reset4 = 1
@@ -423,12 +424,14 @@ def sensorCurrentPV():
 
 def getParams(date_to_find):
     global result_bkp,counter
-    if(counter>=60):
+    if(counter>=300):
         cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
         returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
-        print("databased backed ac_result")
-        time.sleep(1)
+        print(f"getParams databased backed ac_result {counter}")
         counter = 0
+        
+        time.sleep(1)
+        
     else:
         counter +=1
     #print(counter)
@@ -514,7 +517,7 @@ def getParams(date_to_find):
         print(e)
         cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
         returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
-        print("databased backed ac_result")
+        print("error in getparams databased backed ac_result")
         time.sleep(1)
 
     
@@ -592,17 +595,17 @@ def extractData():
 
 @app.route('/reset4', methods=['POST'])
 def test():
+    global reset4
     output = request.get_json()
-    print(output) # This is the output that was stored in the JSON within the browser
-    print(type(output))
     result = json.loads(output) #this converts the json output to a python dictionary
-    print(result) # Printing the new dictionary
-    print(type(result))#this shows the json converted as a python dictionary
+    reset4=result.get("reset_value_4")
+    print(f"#############################{reset4}") # Printing the new dictionary
+    
     return result
 
 
 if __name__ == '__main__':
-    print("version 1.0.4")
+    print("version 1.0.5")
      
     start = time.time()
     try:

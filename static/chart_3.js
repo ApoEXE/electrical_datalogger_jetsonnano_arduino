@@ -45,7 +45,6 @@ $(document).ready(function () {
             },
             scales: {
                 xAxes: [{
-                    beginAtZero: true,
                     display: true,
                     scaleLabel: {
                         display: true,
@@ -65,11 +64,7 @@ $(document).ready(function () {
                     display: true,
                     type: 'linear',
                     position: 'right',
-                    labelString: 'PV Current',
-                    ticks: {
-                        max: 3,
-                        min: 0
-                    }
+                    labelString: 'PV Current'
                 }]
             }
         }
