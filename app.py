@@ -117,8 +117,8 @@ def gather_data():
         time.sleep(0.2)  # Wait for device to actually settle down
         named_tuple = time.localtime() # get struct_time
         date_str,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
-        time_turnon ='09:00:00'
-        time_turnoff='17:00:00'
+        time_turnon ='11:00:00'
+        time_turnoff='16:00:00'
         time_midnight='00:00:00'
         turnON = time.strptime(time_turnon, "%H:%M:%S")
         turnOFF = time.strptime(time_turnoff, "%H:%M:%S")

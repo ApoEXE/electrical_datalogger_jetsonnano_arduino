@@ -266,25 +266,31 @@ def getPower_min():
     #print("getting power WH list")
          
     rows= db.fetchall()#average power
-
+    step=2
     for hour in range(24):
-        for min in range(59):    
+        for min in range(0,59,step):    
             t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
             t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
-
+            #t1 = str(hour)+":00:00"
+            #t2 = str(hour)+":59:00"
+          
             sql_avg_minute ="select avg(POWER) from parameters where date == ? and time >= ? and time <= ? ;"    
             
             db.execute(sql_avg_minute,(date_find,str(t1),str(t2)))
           
             rows= db.fetchall()#average power
-
-            #print(f"PANEL SAVED total Panel records {len(rows)-1} time {t2}")
-            for sl in rows:
-                if(sl[0]!=None):
-                    date_power_ac_list.append(date_find+"_"+str(t2))
-                    power_raw=[round(sl[0],2)]
-                    power_list.append(round(power_raw[0],2))
-                    #print(f"{date_power_ac_list[-1]} :::::  {power_list[-1]}")
+           
+            
+            if(str(rows)!="[(None,)]"):
+                #print(f" Records {str(rows)} time {t2} date: {date_find}")
+                for sl in rows:
+                    if(sl[0]!=None):
+                        date_power_ac_list.append(date_find+"_"+str(t2))
+                        power_raw=[round(sl[0],2)]
+                        power_list.append(round(power_raw[0],2))
+                       # print(f"{date_power_ac_list[-1]} :::::  {power_list[-1]}")
+            else:
+                break
                 
     return date_power_ac_list,power_list
 
@@ -304,9 +310,9 @@ def power_detail_loop():
         start = time.time()
         print(f"power detail reading")
         date_ac_tot,power_ac_tot = getPower_min()
+        print(power_ac_tot)
         print(f"power detail delta: {time.time()-start}")
-        reset4 = 1
-        time.sleep(60)
+        time.sleep(10)
 
 
 power_ac_thread = Thread(target=power_ac_loop)
@@ -379,8 +385,8 @@ def sensorCurrentPV():
     
     def generate_random_data():
         global reset4,date_ac_tot,power_ac_tot
-        if reset4==1:
-            with app.app_context():
+        #if reset4==1:
+        with app.app_context():
                 global pv_voltage,pv_current,pv_enable,pv_date
                 
                 with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
@@ -410,6 +416,7 @@ def sensorCurrentPV():
                                 pv_voltage = float(var_panel_volt)
                                 pv_current = float(var_panel_curr)
                                 pv_enable = True
+                                print(f"{string_date}  {var_power_ac}")
                                 json_data = json.dumps({'date_ac_power': date_ac_tot, 'ac_power': power_ac_tot,'date_ac_power_sec': string_date, 'ac_power_sec': var_power_ac}, default=str)
                                 yield f"data:{json_data}\n\n"
                     except Exception as e:
@@ -417,7 +424,7 @@ def sensorCurrentPV():
                         print(e)
         
 
-        time.sleep(1)
+       # time.sleep(1)
 
     return Response(generate_random_data(), mimetype='text/event-stream')
 
@@ -599,7 +606,7 @@ def test():
     output = request.get_json()
     result = json.loads(output) #this converts the json output to a python dictionary
     reset4=result.get("reset_value_4")
-    print(f"#############################{reset4}") # Printing the new dictionary
+    #print(f"############################# {reset4}") # Printing the new dictionary
     
     return result
 
