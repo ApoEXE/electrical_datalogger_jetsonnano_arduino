@@ -57,11 +57,13 @@ $(document).ready(function () {
     
     source.onmessage = function (event) {
         const pythondata = JSON.parse(event.data);
+        console.log(pythondata.ac_power);
+        console.log(pythondata.date_ac_power.length);
         if (reset_value_4 == 0 && pythondata.date_ac_power.length > 1) {
             for (let index = 0; index < pythondata.date_ac_power.length; index++) {
                 config.data.labels.push(pythondata.date_ac_power[index]);
                 config.data.datasets[0].data.push(pythondata.ac_power[index]);
-                //console.log(pythondata.ac_power);
+                console.log(pythondata.ac_power);
                 reset_value_4 = 1;
 
             }

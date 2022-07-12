@@ -29,7 +29,7 @@ import socket
 shutdown = True
 serverup =True
 connected =True
-realvolt = 4.47
+realvolt = 5
 # DECLARATIONS
 var_current_ac= ""
 var_volt_ac = ""
@@ -126,10 +126,10 @@ def gather_data():
         time_midnight = time.strptime(time_midnight, "%H:%M:%S")
         #print(f"{turnOFF} {turnON} {time_hr}")
         if(time_hr>=turnON and time_hr < turnOFF):
-            bus.write_byte_data(address, 0, 0x0C)#HIGH  TURN ON
+            bus.write_byte_data(address, 0, 0x0B)#HIGH  TURN ON 0x0C
             #print("TURN ON")
         elif(time_hr<turnON and time_hr >= time_midnight):
-            bus.write_byte_data(address, 0, 0x0B)#LOW TURN OFF
+            bus.write_byte_data(address, 0, 0x0B)#LOW TURN OFF 0x0B
             #print("TURN OFF")
         else:# time_hr>=turnOFF
             bus.write_byte_data(address, 0, 0x0B)#LOW TURN OFF
@@ -216,6 +216,11 @@ def gather_data():
         else:
             panel_current_avg = 0
             panel_voltage_avg = 0
+        
+        if current_avg <0.12:
+            current_avg = 0
+        else:
+            current_avg = round(current_avg - 0.11,2)
 
         if(samples != 0 and samples_panel !=0):
             named_tuple = time.localtime() # get struct_time
@@ -229,7 +234,7 @@ def gather_data():
 
             diff_ac = round(abs((voltage_avg-before_ac_volt)),2)
 
-            print(f"AC VOLT now {voltage_avg} before { before_ac_volt} diff ac {diff_ac }")           
+            #print(f"AC VOLT now {voltage_avg} before { before_ac_volt} diff ac {diff_ac }")           
             if diff_ac<=400: 
                 m_volt_ac = str(voltage_avg)
                 before_ac_volt = voltage_avg
@@ -238,7 +243,7 @@ def gather_data():
                 m_volt_ac = str(voltage_avg)
 
             diff_ac = round(abs((current_avg-before_ac_curr)),2)
-            print(f"AC CURRENT now {current_avg } before {before_ac_curr} diff ac {diff_ac }")   
+            #print(f"AC CURRENT now {current_avg } before {before_ac_curr} diff ac {diff_ac }")   
             if diff_ac<=30: 
                 m_current_ac = str(current_avg)  
                 before_ac_curr = current_avg
@@ -256,7 +261,7 @@ def gather_data():
 
             diff = round(abs((panel_voltage_avg-before_pv_volt)),2)
 
-            print(f"panel VOLT now {panel_voltage_avg} before {before_pv_volt} diff {diff }")
+            #print(f"panel VOLT now {panel_voltage_avg} before {before_pv_volt} diff {diff }")
             if diff<=23: 
                 m_panel_volt = str(round(panel_voltage_avg,2))
                 before_pv_volt = panel_voltage_avg
@@ -266,7 +271,7 @@ def gather_data():
             
             diff = round(abs((panel_current_avg-before_pv_curr)),2)
               
-            print(f"panel CURR now {panel_current_avg} before {before_pv_curr} diff  {diff}")         
+            #print(f"panel CURR now {panel_current_avg} before {before_pv_curr} diff  {diff}")         
             if diff<=6: 
                 m_panel_current = str(panel_current_avg)  
                 before_pv_curr = panel_current_avg
@@ -304,33 +309,34 @@ def gather_loop():
             conn.execute("INSERT INTO parameters (DATE,TIME,VOLTAGE,CURRENT,POWER,PANEL_VOLTAGE,PANEL_CURRENT,PANEL_POWER) \
             VALUES ( ?, ?, ?, ?, ?,?,?,?)",(d1,d2,var_volt_ac,var_current_ac,POWER,m_panel_volt,m_panel_current,m_panel_power))
             
-            tmp = time.strptime(d2, "%H:%M:%S")#now
-            tmp2 = time.strptime( hour_before+":00:00", "%H:%M:%S")#hour
-            if(tmp2.tm_hour<10):#hour before
 
-                string_t1 = "0"+str(tmp2.tm_hour)+":00:00"
-            else:
-                string_t1 = str(tmp2.tm_hour)+":00:00"
-
-
-            if(tmp.tm_hour<10):#now
-
-                string_t2 = "0"+str(tmp.tm_hour)+":00:00"
-            else:
-                string_t2 = str(tmp.tm_hour)+":00:00"
-                
-            if(int(tmp.tm_hour)==0):
-                string_t2 = "23:59:00"
-                d1 = last_date            
-      
-            #print(f"{string_t2}  vs {string_t1}")
        
            
-            
+            readonly=True
+            while readonly:   
+                tmp = time.strptime(d2, "%H:%M:%S")#now
+                tmp2 = time.strptime( hour_before+":00:00", "%H:%M:%S")#hour
+                if(tmp2.tm_hour<10):#hour before
+
+                    string_t1 = "0"+str(tmp2.tm_hour)+":00:00"
+                else:
+                    string_t1 = str(tmp2.tm_hour)+":00:00"
+
+
+                if(tmp.tm_hour<10):#now
+
+                    string_t2 = "0"+str(tmp.tm_hour)+":00:00"
+                else:
+                    string_t2 = str(tmp.tm_hour)+":00:00"
+                    
+                if(int(tmp.tm_hour)==0):
+                    string_t2 = "23:59:00"
+                    d1 = last_date            
+      
+            #print(f"{string_t2}  vs {string_t1}")         
             #if(True):
-            if(int(tmp.tm_hour)!=int(tmp2.tm_hour)):
-                readonly=True
-                while readonly:
+                if(int(tmp.tm_hour)!=int(tmp2.tm_hour)):
+
                     try:
                         print(f"new string_t2 {string_t2} and before {string_t1} date {d1}")
                         sql_avg_minute ="select avg(power) from parameters where date == ? and time >= ? and time <= ?;"           
@@ -391,18 +397,20 @@ def gather_loop():
                         conn2.execute("INSERT INTO summary (DATE,TIME,AC_VOLTAGE,AC_CURRENT,AC_POWER,PANEL_VOLTAGE,PANEL_CURRENT,PANEL_POWER,PANEL_LOAD) \
                     VALUES ( ?, ?, ?, ?, ?,?,?,? ,?)",(d1,string_t2,avg_ac_voltage,avg_ac_current,avg_ac_power_wh,avg_pv_voltage,avg_pv_current,avg_pv_power_produced,avg_pv_power_consumed))
                         conn2.commit()
-                        readonly = False
+                        
                     except Exception as e:
                         print(f"error SQLITE summary")
                         readonly = True
                         hour_before= str(tmp.tm_hour)
                         print(e)
+                else:    
+                    readonly = False
                 
                 hour_before= str(tmp.tm_hour)
                 last_date,time_hr = time.strftime("%Y-%m-%d %H:%M:%S", named_tuple).split(" ")
             try:
                 conn.commit()
-                
+                '''
                 print(d1,end=" ")
                 print(d2,end=" ")
                 
@@ -427,7 +435,7 @@ def gather_loop():
                 print(' W ')
                 
                 #time.sleep(0.2)
-                
+                '''
             except Exception as e:
                 #print(f"error SQLITE")
                 print(e)
@@ -505,7 +513,7 @@ signal.signal(signal.SIGINT, stop)
 
 
 if __name__ == '__main__':
-    print("version 1.0.1")
+    print("version 1.0.2")
     gather_thread.start()
     socket_thread.start()
 

@@ -104,15 +104,14 @@ counter = 0
 
 enable_reading_bk=False
 
+enable_reading_last_line = False
+
 cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry_backup.db"
 returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
 print("databased backed ac_telemetry")
 time.sleep(1)
 
-cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
-returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
-print("init databased backed ac_result")
-time.sleep(1)
+
 
 def getDate(i):
         DAY = timedelta(i)
@@ -137,7 +136,17 @@ app = Flask(__name__)
 
 sql_lastrow = "SELECT * FROM parameters ORDER BY id DESC LIMIT 1;"
 
+def bk_ac_telemetry():
+    cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry_backup.db"
+    returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
+    print("databased backed ac_telemetry")
+    time.sleep(1)
 
+def bk_ac_result():
+    cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
+    returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
+    print("init databased backed ac_result")
+    time.sleep(1)
 
 
 def getPanel_voltage():
@@ -256,10 +265,10 @@ def getPower_saved():
 
 #################################
 def getPower_min():
-    global db_backup
+    global db_backup,enable_reading_last_line
     power_list = []
     date_power_ac_list = []
-
+    bk_ac_telemetry()
     date_find =getDate(0)  
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
@@ -267,31 +276,49 @@ def getPower_min():
          
     rows= db.fetchall()#average power
     step=2
-    for hour in range(24):
-        for min in range(0,59,step):    
-            t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
-            t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
-            #t1 = str(hour)+":00:00"
-            #t2 = str(hour)+":59:00"
-          
-            sql_avg_minute ="select avg(POWER) from parameters where date == ? and time >= ? and time <= ? ;"    
+    if(enable_reading_last_line == False):
+        for hour in range(24):
+            for min in range(0,59,step):    
+                t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
+                t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
+                #t1 = str(hour)+":00:00"
+                #t2 = str(hour)+":59:00"
             
-            db.execute(sql_avg_minute,(date_find,str(t1),str(t2)))
-          
-            rows= db.fetchall()#average power
-           
-            
-            if(str(rows)!="[(None,)]"):
-                #print(f" Records {str(rows)} time {t2} date: {date_find}")
-                for sl in rows:
-                    if(sl[0]!=None):
-                        date_power_ac_list.append(date_find+"_"+str(t2))
-                        power_raw=[round(sl[0],2)]
-                        power_list.append(round(power_raw[0],2))
-                       # print(f"{date_power_ac_list[-1]} :::::  {power_list[-1]}")
-            else:
-                break
+                sql_avg_minute ="select avg(POWER) from parameters where date == ? and time >= ? and time <= ? ;"    
                 
+                db.execute(sql_avg_minute,(date_find,str(t1),str(t2)))
+            
+                rows= db.fetchall()#average power
+            
+                
+                if(str(rows)!="[(None,)]"):
+                    #print(f" Records {str(rows)} ")
+                    for sl in rows:
+                        if(sl[0]!=None):
+                            date_power_ac_list.append(date_find+"_"+str(t2))
+                            power_raw=[round(sl[0],2)]
+                            power_list.append(round(power_raw[0],2))
+                            
+                    #print(f"{date_power_ac_list[-1]} :::::  {power_list[-1]}")
+                    enable_reading_last_line = True
+                else:
+                    break
+        print(f"{date_power_ac_list[-1]} ::BLOCK:::  {power_list[-1]}")
+    else:
+        sql_avg_minute ="SELECT * FROM parameters ORDER BY ID DESC LIMIT 1;"
+        db.execute(sql_avg_minute)
+        rows= db.fetchall()#average power
+        if(str(rows)!="[(None,)]"):
+            print(f" Records {str(rows)} ")
+            date=[sl[1] for sl in rows]
+            time=[sl[2] for sl in rows]
+            power_raw=[round(sl[5],2) for sl in rows]
+            date_power_ac_list.append(date_find+"_"+str(time))
+            power_list.append(round(power_raw[0],2))
+            print(f"{date_power_ac_list[-1]} ::LAST:::  {power_list[-1]}")
+        else:
+            print(str(rows))
+
     return date_power_ac_list,power_list
 
 #******************THREADSA
@@ -616,6 +643,8 @@ if __name__ == '__main__':
      
     start = time.time()
     try:
+        bk_ac_telemetry()
+        bk_ac_result()
         power_ac_thread.start()
         power_ac_detail_thread.start()
     except Exception as e:
