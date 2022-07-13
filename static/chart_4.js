@@ -57,10 +57,13 @@ $(document).ready(function () {
     
     source.onmessage = function (event) {
         const pythondata = JSON.parse(event.data);
-        console.log(pythondata.ac_power);
-        console.log(pythondata.date_ac_power.length);
-        if (reset_value_4 == 0 && pythondata.date_ac_power.length > 1) {
-            for (let index = 0; index < pythondata.date_ac_power.length; index++) {
+        //console.log(pythondata.ac_power);
+        //console.log(pythondata.ac_power.length);
+
+        //console.log(pythondata.date_ac_power);
+        //console.log(pythondata.date_ac_power.length);
+        if (reset_value_4 == 0 && pythondata.ac_power.length > 5) {
+            for (let index = 0; index < pythondata.ac_power.length; index++) {
                 config.data.labels.push(pythondata.date_ac_power[index]);
                 config.data.datasets[0].data.push(pythondata.ac_power[index]);
                 console.log(pythondata.ac_power);
@@ -70,6 +73,7 @@ $(document).ready(function () {
             lineChart.update();
 
         } 
+        else{
         if(reset_value_4 == 1){
             config.data.labels.push(pythondata.date_ac_power_sec);
             config.data.datasets[0].data.push(pythondata.ac_power_sec);
@@ -79,10 +83,11 @@ $(document).ready(function () {
             lineChart.update();
 
         }
+        }
         const dict_values = { reset_value_4 }
         const s = JSON.stringify(dict_values); // Stringify converts a JavaScript object or value to a JSON string
         
-        console.log(reset_value_4);
+        //console.log(reset_value_4);
         //console.log(s);
         //window.alert(s)
         $.ajax({

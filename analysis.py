@@ -265,9 +265,8 @@ def getPower_saved():
 
 #################################
 def getPower_min():
-    global db_backup,enable_reading_last_line
-    power_list = []
-    date_power_ac_list = []
+    global db_backup,enable_reading_last_line,date_ac_tot,power_ac_tot
+
     bk_ac_telemetry()
     date_find =getDate(0)  
     conn = sqlite3.connect(db_backup, check_same_thread=False)
@@ -278,9 +277,23 @@ def getPower_min():
     step=2
     if(enable_reading_last_line == False):
         for hour in range(24):
-            for min in range(0,59,step):    
-                t1 = dt.datetime.strptime(str(hour)+":"+str(min)+":00", '%H:%M:%S').time()
-                t2 = dt.datetime.strptime(str(hour)+":"+str(min+1)+":00", '%H:%M:%S').time()
+            for min in range(0,59,step): 
+                if min<=9:
+                    tmp1 =":0"+str(min)
+                    tmpa =":0"+str(min+1)
+                else:
+                    tmp1 =":"+str(min)
+                    tmpa =":"+str(min+1)
+
+                if hour<=9:
+                    tmp2 ="0"+str(hour)
+                else:
+                    tmp2 =""+str(hour)
+                string_t1 = tmp2+tmp1+":00"
+                string_t2 =tmp2+tmpa+":00" 
+                t1 = dt.datetime.strptime(string_t1 , '%H:%M:%S').time()
+                t2 = dt.datetime.strptime(string_t2, '%H:%M:%S').time()
+                print(string_t2)
                 #t1 = str(hour)+":00:00"
                 #t2 = str(hour)+":59:00"
             
@@ -295,31 +308,34 @@ def getPower_min():
                     #print(f" Records {str(rows)} ")
                     for sl in rows:
                         if(sl[0]!=None):
-                            date_power_ac_list.append(date_find+"_"+str(t2))
+                            date_ac_tot.append(date_find+"_"+string_t2)
                             power_raw=[round(sl[0],2)]
-                            power_list.append(round(power_raw[0],2))
+                            power_ac_tot.append(round(power_raw[0],2))
                             
                     #print(f"{date_power_ac_list[-1]} :::::  {power_list[-1]}")
                     enable_reading_last_line = True
                 else:
                     break
-        print(f"{date_power_ac_list[-1]} ::BLOCK:::  {power_list[-1]}")
+        
+        #print(date_ac_tot)
+        #print(power_ac_tot)
+        #print(f"{date_ac_tot[-1]} ::BLOCK:::  {power_ac_tot[-1]}")
     else:
         sql_avg_minute ="SELECT * FROM parameters ORDER BY ID DESC LIMIT 1;"
         db.execute(sql_avg_minute)
         rows= db.fetchall()#average power
         if(str(rows)!="[(None,)]"):
-            print(f" Records {str(rows)} ")
+            #print(f" Records {str(rows)} ")
             date=[sl[1] for sl in rows]
             time=[sl[2] for sl in rows]
             power_raw=[round(sl[5],2) for sl in rows]
-            date_power_ac_list.append(date_find+"_"+str(time))
-            power_list.append(round(power_raw[0],2))
-            print(f"{date_power_ac_list[-1]} ::LAST:::  {power_list[-1]}")
+            date_ac_tot.append(date_find+"_"+str(time[0]))
+            power_ac_tot.append(round(power_raw[0],2))
+            #print(f"{date_ac_tot[-1]} ::LAST:::  {power_ac_tot[-1]}")
         else:
             print(str(rows))
 
-    return date_power_ac_list,power_list
+    return date_ac_tot,power_ac_tot
 
 #******************THREADSA
 
@@ -336,10 +352,12 @@ def power_detail_loop():
     while True:        
         start = time.time()
         print(f"power detail reading")
-        date_ac_tot,power_ac_tot = getPower_min()
-        print(power_ac_tot)
+        getPower_min()
+        #print(date_ac_tot)
+
         print(f"power detail delta: {time.time()-start}")
-        time.sleep(10)
+        reset4=1
+        time.sleep(1)
 
 
 power_ac_thread = Thread(target=power_ac_loop)
@@ -414,42 +432,43 @@ def sensorCurrentPV():
         global reset4,date_ac_tot,power_ac_tot
         #if reset4==1:
         with app.app_context():
-                global pv_voltage,pv_current,pv_enable,pv_date
+                global pv_voltage,pv_current,pv_enable,pv_date,reset4
                 
                 with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
                     line_before = []
-
-                    try:
-                        s.connect(("127.0.0.1",12345))
-                        data = s.recv(4096)
-                        #if not data:
-                                #break
-                        data = data.decode('utf-8')
-                        line = eval(data)
-                        if(line[0]!=""):
-                                var_date= line[0]
-                                var_time=line[1]
-                                var_current_ac = line[3]
-                                var_power_ac = line[4]
-                                var_volt_ac = line[2]
-                                var_panel_volt = line[5]
-                                var_panel_curr = line[6]
-                                var_panel_power = line[7]
-                                if(line_before!=line):
-                                    #print(line)
-                                    line_before = line
-                                string_date = var_date +"-"+var_time
-                                pv_date = string_date
-                                pv_voltage = float(var_panel_volt)
-                                pv_current = float(var_panel_curr)
-                                pv_enable = True
-                                print(f"{string_date}  {var_power_ac}")
-                                json_data = json.dumps({'date_ac_power': date_ac_tot, 'ac_power': power_ac_tot,'date_ac_power_sec': string_date, 'ac_power_sec': var_power_ac}, default=str)
-                                yield f"data:{json_data}\n\n"
-                    except Exception as e:
-                        #print("Connection refused")
-                        print(e)
-        
+                    if reset4:
+                        try:
+                            s.connect(("127.0.0.1",12345))
+                            data = s.recv(4096)
+                            #if not data:
+                                    #break
+                            data = data.decode('utf-8')
+                            line = eval(data)
+                            if(line[0]!=""):
+                                    var_date= line[0]
+                                    var_time=line[1]
+                                    var_current_ac = line[3]
+                                    var_power_ac = line[4]
+                                    var_volt_ac = line[2]
+                                    var_panel_volt = line[5]
+                                    var_panel_curr = line[6]
+                                    var_panel_power = line[7]
+                                    if(line_before!=line):
+                                        #print(line)
+                                        line_before = line
+                                    string_date = var_date +"-"+var_time
+                                    pv_date = string_date
+                                    pv_voltage = float(var_panel_volt)
+                                    pv_current = float(var_panel_curr)
+                                    pv_enable = True
+                                    #print(f"{string_date}  {var_power_ac}")
+                                    json_data = json.dumps({'date_ac_power': date_ac_tot, 'ac_power': power_ac_tot,'date_ac_power_sec': string_date, 'ac_power_sec': var_power_ac}, default=str)
+                                    yield f"data:{json_data}\n\n"
+                        except Exception as e:
+                            #print("Connection refused")
+                            print(e)
+                    else:
+                        print("waiting...")
 
        # time.sleep(1)
 
@@ -632,14 +651,14 @@ def test():
     global reset4
     output = request.get_json()
     result = json.loads(output) #this converts the json output to a python dictionary
-    reset4=result.get("reset_value_4")
+    #reset4=result.get("reset_value_4")
     #print(f"############################# {reset4}") # Printing the new dictionary
     
     return result
 
 
 if __name__ == '__main__':
-    print("version 1.0.5")
+    print("version 1.0.6")
      
     start = time.time()
     try:
