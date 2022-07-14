@@ -106,12 +106,7 @@ enable_reading_bk=False
 
 enable_reading_last_line = False
 
-cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry_backup.db"
-returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
-print("databased backed ac_telemetry")
-time.sleep(1)
-
-
+safe_last_date = ''
 
 def getDate(i):
         DAY = timedelta(i)
@@ -140,13 +135,13 @@ def bk_ac_telemetry():
     cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_telemetry_backup.db"
     returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
     print("databased backed ac_telemetry")
-    time.sleep(1)
+    time.sleep(2)
 
 def bk_ac_result():
     cmd = "cp -a /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result.db /home/nano/projects/electrical_datalogger_jetsonnano_arduino/ac_result_backup.db"
     returned_value = subprocess.call(cmd, shell=True)  # returns the exit code in unix
     print("init databased backed ac_result")
-    time.sleep(1)
+    time.sleep(2)
 
 
 def getPanel_voltage():
@@ -265,10 +260,17 @@ def getPower_saved():
 
 #################################
 def getPower_min():
-    global db_backup,enable_reading_last_line,date_ac_tot,power_ac_tot
+    global db_backup,enable_reading_last_line,date_ac_tot,power_ac_tot,safe_last_date
 
     bk_ac_telemetry()
-    date_find =getDate(0)  
+    
+    date_find =getDate(0) 
+    if safe_last_date !=date_find:
+        safe_last_date = date_find
+        date_ac_tot = []
+        power_ac_tot = []
+        enable_reading_last_line = False
+        print("different dates reset lists")
     conn = sqlite3.connect(db_backup, check_same_thread=False)
     db = conn.cursor()
     #print("getting power WH list")
@@ -314,6 +316,9 @@ def getPower_min():
                             
                     #print(f"{date_power_ac_list[-1]} :::::  {power_list[-1]}")
                     enable_reading_last_line = True
+                    print(date_ac_tot)
+                    print(power_ac_tot)
+                    print(f"{date_ac_tot[-1]} ::BLOCK:::  {power_ac_tot[-1]}")
                 else:
                     break
         
@@ -322,18 +327,29 @@ def getPower_min():
         #print(f"{date_ac_tot[-1]} ::BLOCK:::  {power_ac_tot[-1]}")
     else:
         sql_avg_minute ="SELECT * FROM parameters ORDER BY ID DESC LIMIT 1;"
-        db.execute(sql_avg_minute)
-        rows= db.fetchall()#average power
-        if(str(rows)!="[(None,)]"):
-            #print(f" Records {str(rows)} ")
-            date=[sl[1] for sl in rows]
-            time=[sl[2] for sl in rows]
-            power_raw=[round(sl[5],2) for sl in rows]
-            date_ac_tot.append(date_find+"_"+str(time[0]))
-            power_ac_tot.append(round(power_raw[0],2))
-            #print(f"{date_ac_tot[-1]} ::LAST:::  {power_ac_tot[-1]}")
-        else:
-            print(str(rows))
+        try:
+            db.execute(sql_avg_minute)
+        
+
+            rows= db.fetchall()#average power
+            if(str(rows)!="[(None,)]"):
+                #print(f" Records {str(rows)} ")
+                date=[sl[1] for sl in rows]
+                time=[sl[2] for sl in rows]
+                
+                power_raw=[round(sl[5],2) for sl in rows]
+                date_ac_tot.append(date_find+"_"+str(time[0]))
+                power_ac_tot.append(round(power_raw[0],2))
+                print(f"{date_ac_tot[-1]} ::LAST:::  {power_ac_tot[-1]}")
+            else:
+                print(str(rows))
+        except Exception as e:
+            from inspect import currentframe, getframeinfo
+
+            frameinfo = getframeinfo(currentframe())
+
+            print(frameinfo.filename, frameinfo.lineno)                            
+            print(e)
 
     return date_ac_tot,power_ac_tot
 
@@ -438,6 +454,7 @@ def sensorCurrentPV():
                     line_before = []
                     if reset4:
                         try:
+                            '''
                             s.connect(("127.0.0.1",12345))
                             data = s.recv(4096)
                             #if not data:
@@ -464,6 +481,9 @@ def sensorCurrentPV():
                                     #print(f"{string_date}  {var_power_ac}")
                                     json_data = json.dumps({'date_ac_power': date_ac_tot, 'ac_power': power_ac_tot,'date_ac_power_sec': string_date, 'ac_power_sec': var_power_ac}, default=str)
                                     yield f"data:{json_data}\n\n"
+                                    '''
+                            json_data = json.dumps({'date_ac_power': date_ac_tot, 'ac_power': power_ac_tot,'date_ac_power_sec': date_ac_tot[-1], 'ac_power_sec': power_ac_tot[-1]}, default=str)
+                            yield f"data:{json_data}\n\n"
                         except Exception as e:
                             #print("Connection refused")
                             print(e)
